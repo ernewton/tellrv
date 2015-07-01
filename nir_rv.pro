@@ -182,10 +182,9 @@ PRO NIR_RV, order, data, hdr, $
 	torest=rv-bc
 ; 		print, 'shifts', shft, s_shft
 	; shift is now the exact vector you need
-	print, shft
-	print, mean(data_tc[*,0]*rv0/(3.e5))
+
 	shft = shft - data_tc[*,0]*rv0/(3.e5)
-	print, 'RVs', rv, bc, torest
+; 	print, 'RVs', rv, bc, torest
 
 END
 

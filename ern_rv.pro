@@ -90,7 +90,6 @@ PRO ERN_RV, data, std, pixscale=pixscale, wrange=wrange, showplot=showplot, rv0=
 
 	offset=-shft*pixscale/(oversamp*mean(data[roi,0]))  	; delta lambda/lambda
 	RV0=3.0e5*offset					; velocity
-print, offset, rv0, rv0/(3e5)
 
 	IF KEYWORD_SET(showplot) THEN BEGIN
 	
