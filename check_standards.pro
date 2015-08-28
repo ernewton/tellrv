@@ -1,4 +1,4 @@
-PRO check_standards
+PRO check_standards, ccorr=ccorr, contf=contf, showplot=showplot
 
   ;file is big, best to read it in only once
   atrans=XMRDFITS('/home/enewton/pro/Spextool/data/atrans.fits',0)
@@ -42,7 +42,8 @@ PRO check_standards
       spixscale=pixscale, spolydegree=polydegree, $ ; standard is from same set-up 
       wrange=wrange, trange=trange, $
       shft=myshft, s_shft=s_shft, rv=myrv, $
-      showplot=0, torest=rv0
+      showplot=showplot, torest=rv0, ccorr=ccorr, $
+      contf=contf, frac=frac, sbin=sbin
 
     print, "Measured absolute RV:", myrv
     print, "RV offset to rest:", rv0

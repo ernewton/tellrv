@@ -1,21 +1,74 @@
+FUNCTION SPLINE_CONT, int, frac=frac, sbin=sbin, showplot=showplot
+
+	IF ~KEYWORD_SET(frac) THEN frac=0.2
+	IF ~KEYWORD_SET(sbin) THEN sbin=10
+	ordrd = SORT(int)
+	
+	xall = FINDGEN(N_ELEMENTS(int))
+	x = FLTARR(sbin) ; spline arrays
+	y = FLTARR(sbin) ; spline arrays
+	
+	binsize = fix(N_ELEMENTS(int)/sbin)
+	FOR b=0,sbin-1 DO BEGIN
+		i1 = binsize*b
+		i2 = binsize*(b+1)
+		bin = xall[i1:i2]
+		fbin = int[bin]
+
+		; highest frac fraction of points in bin
+		lim = (fbin[SORT(fbin)])[fix((1.-frac)*N_ELEMENTS(fbin))]
+		use = WHERE(fbin GT lim, count)
+		; five points in each bin at least...
+		WHILE count LT 5. DO BEGIN	
+			lim = (fbin[SORT(fbin)])[fix((1.-frac+0.1)*N_ELEMENTS(fbin))]
+			use = WHERE(int GT lim, count)
+			stop
+		ENDWHILE
+		
+		x[b] = MEDIAN(bin[use])
+		y[b] = MEDIAN(fbin[use])
+	ENDFOR
+	
+	c = SPLINE(x,y,FINDGEN(N_ELEMENTS(int)))
+
+	IF KEYWORD_SET(showplot) THEN BEGIN
+		plot, int
+		oplot, x, y
+		oplot, c
+	ENDIF
+	
+	RETURN, c
+	
+END
+
 ;============================================
 ; FUNCTION FLATTEN
 ; Remove continuum from a spectrum
 
 
 
-FUNCTION FLATTEN, int, showplot=showplot
+FUNCTION FLATTEN, int, showplot=showplot, contf=contf, frac=frac, sbin=sbin
 
 
 	IF KEYWORD_SET(showplot) THEN showplot=2
 
-	contf, int, c1, nord=4, sbin=10,frac=0.5, plot=showplot, mask=fin, xspline=xspline, yspline=yspline
-	t1=spline(xspline,yspline,FINDGEN(N_ELEMENTS(int)))
+	IF KEYWORD_SET(contf) THEN BEGIN
 	
-	contf, int/t1, c2, nord=4, sbin=6,frac=0.2, plot=showplot, mask=fin, xspline=xspline, yspline=yspline
-	t2=spline(xspline,yspline,FINDGEN(N_ELEMENTS(int)))
+		CONTF, int, c1, nord=4, sbin=10,frac=0.5, plot=showplot, mask=fin, xspline=xspline, yspline=yspline
+		t1=SPLINE(xspline,yspline,FINDGEN(N_ELEMENTS(int)))
+		
+		CONTF, int/t1, c2, nord=4, sbin=6,frac=0.2, plot=showplot, mask=fin, xspline=xspline, yspline=yspline
+		t2=SPLINE(xspline,yspline,FINDGEN(N_ELEMENTS(int)))
+		
+		flat=int/t1/t2
+		
+	ENDIF ELSE BEGIN
 	
-	flat=int/t1/t2
+		t1 = SPLINE_CONT(int, sbin=10, frac=0.4, showplot=showplot)
+		t2 = SPLINE_CONT(int/t1, sbin=10, frac=0.2, showplot=showplot)
+		flat=int/t1/t2
+	
+	ENDELSE
 	IF KEYWORD_SET(showplot) THEN wait,2
 
 	RETURN, flat
@@ -31,7 +84,7 @@ END
 
 
 
-PRO ERN_RV, data, std, pixscale=pixscale, wrange=wrange, showplot=showplot, rv0=rv0, chi=chi, corr_range=corr_range
+PRO ERN_RV, data, std, pixscale=pixscale, wrange=wrange, showplot=showplot, rv0=rv0, chi=chi, corr_range=corr_range, oversamp=oversamp, ccorr=ccorr, contf=contf, frac=frac, sbin=sbin
 
 	IF KEYWORD_SET(showplot) THEN showplot=2
 
@@ -47,7 +100,8 @@ PRO ERN_RV, data, std, pixscale=pixscale, wrange=wrange, showplot=showplot, rv0=
 	ENDELSE
 
 	; create oversampled grid uniformly spaced in log lambda	
-	oversamp=6. 
+	IF ~KEYWORD_SET(oversamp) THEN $
+		oversamp=6. 
 	wl_vector = SCALE_VECTOR(FINDGEN((end_wl-start_wl)*oversamp*mean(data[roi,0])/pixscale), start_wl, end_wl) 
 
 	; interpolate object and standard onto new grid
@@ -55,8 +109,8 @@ PRO ERN_RV, data, std, pixscale=pixscale, wrange=wrange, showplot=showplot, rv0=
 	int_std = INTERPOL(std[*,1],ALOG(std[*,0]),wl_vector, /spline)	
 
 	; remove continuum
-	flat_obj=FLATTEN(int_obj, showplot=showplot)
-	flat_std=FLATTEN(int_std, showplot=showplot)
+	flat_obj=FLATTEN(int_obj, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
+	flat_std=FLATTEN(int_std, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
 
 	IF KEYWORD_SET(showplot) THEN BEGIN
 	
@@ -77,8 +131,22 @@ PRO ERN_RV, data, std, pixscale=pixscale, wrange=wrange, showplot=showplot, rv0=
 
 	IF NOT KEYWORD_SET(corr_range) THEN corr_range=20
 ; 	xcorl, flat_std, flat_obj, corr_range, shft, chi, minchi, plot=showplot, print=showplot
-	cross_correlate, flat_std, flat_obj, shft, result, width=corr_range*2
-	IF KEYWORD_SET(showplot) THEN wait, 2
+	if KEYWORD_SET(ccorr) THEN BEGIN
+		lag = indgen(corr_range*2)-corr_range
+		result = c_correlate(flat_obj, flat_std, lag) ; opposite order
+		pk = MAX(result,p)
+		; if not at ends, quadratic offset to get better peak
+		if (p GT 0) and (p LT (N_ELEMENTS(lag)-1)) THEN BEGIN
+			aa = result[p]
+			bb = 0.5*(result[p+1] - result[p-1])
+			cc = 0.5*(result[p+1] + result[p-1] - 2.0*aa)
+			offset = -0.5*bb/cc
+		ENDIF ELSE $
+			offset = 0.
+		shft = lag[p] + offset
+	ENDIF ELSE BEGIN
+		cross_correlate, flat_std, flat_obj, shft, result, width=corr_range*2
+	ENDELSE
 
 	; these are the pixel arrays
 	pix_fiducial = MAKE_ARRAY(N_ELEMENTS(wl_vector),/index)
@@ -120,7 +188,7 @@ PRO ERN_RV, data, std, pixscale=pixscale, wrange=wrange, showplot=showplot, rv0=
 		print, 'The radial velocity is ', RV0
 		
 ; 		wait, 2
-	stop
+		stop
 	ENDIF
 
 END
