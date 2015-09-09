@@ -6,7 +6,7 @@
 
 
 
-FUNCTION GET_HELIO, hdr, degrees=degrees, barycentric=barycentric
+FUNCTION GET_HELIO, hdr, degrees=degrees, barycentric=barycentric, force=force
 
 	IF N_ELEMENTS(barycentric) EQ 0 THEN barycentric = 1
 
@@ -22,12 +22,17 @@ FUNCTION GET_HELIO, hdr, degrees=degrees, barycentric=barycentric
 		degrees = 0
 		END	
 	  'Baade': BEGIN
-		lat = -29.0146
-		lon = -70.6926
-		alt = 2400.
+		; helio already in header
+		IF ~KEYWORD_SET(force) THEN RETURN, FXPAR(hdr, 'HELIO')
+
+		print, "GET_HELIO: calculating from header info for FIRE."
+		lat = FXPAR(hdr, 'SITELAT')
+		lon = FXPAR(hdr, 'SITELONG')
+		alt = FXPAR(hdr, 'SITEALT')
 		date = FXPAR(hdr, 'DATE-OBS')
 		time = FXPAR(hdr, 'UT-TIME')
 		degrees = 1
+				
 		END
 	   ELSE: message, 'Telescope invalid'
 	ENDCASE
