@@ -89,9 +89,11 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	pixscale=pixscale, $ ; pixel scale
 	wrange=wrange, $ ; wavelenghts to flatten over,
 	oversamp=oversamp, $ ; oversampling multiple
+	zero=zero, nan=nan, $ ; bad data flags
 	xcorl=xcorl, ccorr=ccorr, $ ; choosing cross-correlation routine
 	corr_range=corr_range, $ ; cross-corr range
-	contf=contf, frac=frac, sbin=sbin ; for flattening spectrum
+	contf=contf, frac=frac, sbin=sbin, $ ; for flattening spectrum
+	verbose=verbose
 
 	IF KEYWORD_SET(showplot) THEN showplot=1
 
@@ -111,8 +113,19 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 		oversamp=6. 
 	wl_vector = SCALE_VECTOR(FINDGEN((end_wl-start_wl)*oversamp*mean(data[roi,0])/pixscale), start_wl, end_wl) 
 
+	IF KEYWORD_SET(zero) THEN BEGIN
+	  roi = WHERE(data[*,1] GT 0)
+	  IF verbose THEN print, "ERN_RV: using non-zero fluxes."
+	ENDIF ELSE IF KEYWORD_SET(nan) THEN BEGIN
+	  roi = WHERE(FINITE(data[*,1]))
+	  IF verbose THEN print, "ERN_RV: using finite fluxes."
+	ENDIF ELSE BEGIN
+	  roi = FINDGEN(N_ELEMENTS(data[*,1]))
+	  IF verbose THEN print, "ERN_RV: using all provided data."
+	ENDELSE
+
 	; interpolate object and standard onto new grid
-	int_obj = INTERPOL(data[*,1],ALOG(data[*,0]),wl_vector, /spline) 
+	int_obj = INTERPOL(data[roi,1],ALOG(data[roi,0]),wl_vector, /spline) 
 	int_std = INTERPOL(std[*,1],ALOG(std[*,0]),wl_vector, /spline)	
 
 	; remove continuum
@@ -172,7 +185,7 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 		erase & multiplot, [1,3]
 		
 		plot, pix_fiducial, int_obj/MEAN(int_obj), /xsty
-		oplot, pix_fiducial, int_std/MEAN(int_std)-0.4
+		oplot, pix_fiducial, int_std/MEAN(int_std)-0.4, co=2
 		oplot, pix_shifted, int_obj/MEAN(int_obj)-0.2, co=3
 		oplot, [N_ELEMENTS(wl_vector)/5,N_ELEMENTS(wl_vector)/5], [0,2],linestyle=2
 		oplot, [2*N_ELEMENTS(wl_vector)/5,2*N_ELEMENTS(wl_vector)/5], [0,2],linestyle=2
@@ -182,7 +195,7 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 		multiplot
 		
 		plot, wl_vector, flat_obj, yrange=[0.3,1.2], /xsty
-		oplot, wl_vector, flat_std-0.4
+		oplot, wl_vector, flat_std-0.4, co=2
 		oplot, wl_shifted, flat_obj-0.2, co=3
 		oplot, [ALOG(2.2063),ALOG(2.2063)],[0,5],linestyle=2
 		oplot, [ALOG(2.26267),ALOG(2.26267)],[0,5],linestyle=2
@@ -190,7 +203,7 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 		multiplot
 		
 		plot, data[*,0], data[*,1]/MEAN(data[roi,1]), xrange=wrange, /xsty
-		oplot, std[*,0], std[*,1]/MEAN(std[WHERE(FINITE(std[*,1])),1])-0.4
+		oplot, std[*,0], std[*,1]/MEAN(std[WHERE(FINITE(std[*,1])),1])-0.4, co=2
 		oplot, data[*,0]-offset*data[*,0], data[*,1]/MEAN(data[roi,1])-0.2, co=3
 
 		print, 'The radial velocity is ', RV0

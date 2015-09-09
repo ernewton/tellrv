@@ -17,8 +17,9 @@ PRO check_standards, xcorl=xcorl, ccorr=ccorr, contf=contf, showplot=showplot
   std_tc0[*,0,*]=std0[*,0,*]	; want to use original wavelength array
   stdrv = rvs[0]
 
-  i = 0
-  FOREACH star, stars DO BEGIN 
+  order = 1
+  FOR i=0,N_ELEMENTS(stars)-1 DO BEGIN 
+    star = stars[i]
     std = std0
     std_tc = std_tc0
 
@@ -31,7 +32,6 @@ PRO check_standards, xcorl=xcorl, ccorr=ccorr, contf=contf, showplot=showplot
     print, "File is: ", file
     print, "RV is:   ", rvs[i]
 
-    order = 2
     data_tc[*,0,*]=data[*,0,*]
 
     order_variables, hdr, order, wrange, trange, pixscale, polydegree, telescope="irtf"
@@ -46,11 +46,10 @@ PRO check_standards, xcorl=xcorl, ccorr=ccorr, contf=contf, showplot=showplot
       ccorr=ccorr, xcorl=xcorl, $
       contf=contf, frac=frac, sbin=sbin
 
-    print, "Measured absolute RV:", myrv
-    print, "RV offset to rest:", rv0
-    i++
+    print, "Measured absolute RV: ", myrv
+    print, " & to rest:", rv0
     
-  ENDFOREACH
+  ENDFOR
   
 END
 
