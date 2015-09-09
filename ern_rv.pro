@@ -115,13 +115,13 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 
 	IF KEYWORD_SET(zero) THEN BEGIN
 	  roi = WHERE(data[*,1] GT 0)
-	  IF verbose THEN print, "ERN_RV: using non-zero fluxes."
+	  IF KEYWORD_SET(verbose) THEN print, "ERN_RV: using non-zero fluxes."
 	ENDIF ELSE IF KEYWORD_SET(nan) THEN BEGIN
 	  roi = WHERE(FINITE(data[*,1]))
-	  IF verbose THEN print, "ERN_RV: using finite fluxes."
+	  IF KEYWORD_SET(verbose) THEN print, "ERN_RV: using finite fluxes."
 	ENDIF ELSE BEGIN
 	  roi = FINDGEN(N_ELEMENTS(data[*,1]))
-	  IF verbose THEN print, "ERN_RV: using all provided data."
+	  IF KEYWORD_SET(verbose) THEN print, "ERN_RV: using all provided data."
 	ENDELSE
 
 	; interpolate object and standard onto new grid
