@@ -27,8 +27,8 @@ END
 
 
 
-PRO NIR_RV, order, data, hdr, $
-	data_tc, std, std_tc, shdr, stdrv=stdrv, $
+PRO NIR_RV, order, mydata, hdr, $
+	mydata_tc, mystd, mystd_tc, shdr, stdrv=stdrv, $
 	atrans=atrans, $
 	polydegree=plorder, pixscale=pixscale, $
 	spolydegree=s_plorder, spixscale=s_pixscale, $
@@ -36,6 +36,11 @@ PRO NIR_RV, order, data, hdr, $
 	shft=shft, s_shft=s_shft, rv=rv, torest=torest, $
 	showplot=showplot, chi=chi, corr_range=corr_range, maxshift=maxshift, ccorr=ccorr, xcorl=xcorl, $
 	contf=contf, frac=frac, sbin=sbin
+
+	data = mydata
+	data_tc = mydata_tc
+	std = mystd
+	std_tc = mystd_tc
 
 	IF ~KEYWORD_SET(atrans) THEN $
 		atrans=XMRDFITS('/home/enewton/pro/Spextool/data/atrans.fits',0)
@@ -48,20 +53,9 @@ PRO NIR_RV, order, data, hdr, $
 	        maxshift=0.0008
 	maxshft=maxshift/pixscale*oversamp
 
-	; some regions should be masked out
-; 	IF NOT KEYWORD_SET(roi) THEN BEGIN
-; 	CASE order OF
-; 		0:	
-; 		1:	
-; 		2:	mask=[[1.2675,1.270]]
-; 		3:	
-; 		4:	
-; 	ENDCASE
-; 	ENDIF
-
 	; first, get wavelength calibration by modeling the data
-	TELL_MODEL, order, atrans, data, hdr, data_new, atrans_new=atrans_new, roi=roi, $
-		plorder=plorder, trange=trange, wrange=wrange, oversamp=oversamp, $
+	TELL_MODEL, order, atrans, data, hdr, data_new, atrans_new=atrans_new, $
+		plorder=plorder, trange=trange, oversamp=oversamp, $
 		pixscale=pixscale, maxshft=maxshft, showplot=showplot, $
 		res=res, shft=shft, origcont=origcont
 
@@ -100,8 +94,8 @@ PRO NIR_RV, order, data, hdr, $
 
 	; get wavelength calibration for the standaerd by modeling the data
 
-	TELL_MODEL, order, atrans, std, shdr, std_new, atrans_new=atrans_new, roi=roi, $
-	plorder=plorder, trange=trange, wrange=wrange, oversamp=oversamp, $
+	TELL_MODEL, order, atrans, std, shdr, std_new, atrans_new=atrans_new, $
+	plorder=plorder, trange=trange, oversamp=oversamp, $
 	pixscale=s_pixscale, maxshft=maxshft, showplot=showplot, $
 	res=s_res, shft=s_shft, origcont=s_origcont
 
@@ -137,6 +131,8 @@ PRO NIR_RV, order, data, hdr, $
 
 	shft = shft - data_tc[*,0]*rv0/(3.e5)
 ; 	print, 'RVs', rv, bc, torest
+
+print, "max shift", maxshft
 
 END
 
