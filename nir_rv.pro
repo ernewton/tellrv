@@ -83,7 +83,7 @@ PRO NIR_RV, order, data, hdr, $
 	spolydegree=s_plorder, spixscale=s_pixscale, $
 	trange=trange, wrange=wrange, $
 	shft=shft, s_shft=s_shft, rv=rv, torest=torest, $
-	showplot=showplot, chi=chi, corr_range=corr_range, maxshift=maxshift, ccorr=ccorr, $
+	showplot=showplot, chi=chi, corr_range=corr_range, maxshift=maxshift, ccorr=ccorr, xcorl=xcorl, $
 	contf=contf, frac=frac, sbin=sbin
 
 	IF ~KEYWORD_SET(atrans) THEN $
@@ -177,7 +177,7 @@ PRO NIR_RV, order, data, hdr, $
 	std_tc_new = std_tc
 	std_tc_new[*,0] = std_tc[*,0]+s_shft		
 
-	ERN_RV, data_tc_new, std_tc_new, wrange=wrange, pixscale=pixscale, rv0=rv0, showplot=showplot, chi=chi, corr_range=corr_range, ccorr=ccorr, contf=contf, frac=frac, sbin=sbin
+	ERN_RV, data_tc_new, std_tc_new, wrange=wrange, pixscale=pixscale, rv0=rv0, showplot=showplot, chi=chi, corr_range=corr_range, ccorr=ccorr, xcorl=xcorl, contf=contf, frac=frac, sbin=sbin
 
 	rv=DO_BARY(rv0, hdr, shdr, bc=bc, rv_std=stdrv)
 	torest=rv-bc

@@ -84,9 +84,16 @@ END
 
 
 
-PRO ERN_RV, data, std, pixscale=pixscale, wrange=wrange, showplot=showplot, rv0=rv0, chi=chi, corr_range=corr_range, oversamp=oversamp, ccorr=ccorr, contf=contf, frac=frac, sbin=sbin
+PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
+	showplot=showplot, $ ; show plots in output?
+	pixscale=pixscale, $ ; pixel scale
+	wrange=wrange, $ ; wavelenghts to flatten over,
+	oversamp=oversamp, $ ; oversampling multiple
+	xcorl=xcorl, ccorr=ccorr, $ ; choosing cross-correlation routine
+	corr_range=corr_range, $ ; cross-corr range
+	contf=contf, frac=frac, sbin=sbin ; for flattening spectrum
 
-	IF KEYWORD_SET(showplot) THEN showplot=2
+	IF KEYWORD_SET(showplot) THEN showplot=1
 
 	; select wavelength range (log lambda)
 	IF KEYWORD_SET(wrange) THEN BEGIN
@@ -130,13 +137,14 @@ PRO ERN_RV, data, std, pixscale=pixscale, wrange=wrange, showplot=showplot, rv0=
 	ENDIF
 
 	IF NOT KEYWORD_SET(corr_range) THEN corr_range=20
-; 	xcorl, flat_std, flat_obj, corr_range, shft, chi, minchi, plot=showplot, print=showplot
-	if KEYWORD_SET(ccorr) THEN BEGIN
+	IF KEYWORD_SET(xcorl) THEN BEGIN
+		xcorl, flat_std, flat_obj, corr_range, shft, chi, minchi, plot=showplot, print=showplot
+	ENDIF ELSE IF KEYWORD_SET(ccorr) THEN BEGIN
 		lag = indgen(corr_range*2)-corr_range
 		result = c_correlate(flat_obj, flat_std, lag) ; opposite order
 		pk = MAX(result,p)
 		; if not at ends, quadratic offset to get better peak
-		if (p GT 0) and (p LT (N_ELEMENTS(lag)-1)) THEN BEGIN
+		IF (p GT 0) AND (p LT (N_ELEMENTS(lag)-1)) THEN BEGIN
 			aa = result[p]
 			bb = 0.5*(result[p+1] - result[p-1])
 			cc = 0.5*(result[p+1] + result[p-1] - 2.0*aa)

@@ -1,4 +1,4 @@
-PRO check_standards, ccorr=ccorr, contf=contf, showplot=showplot
+PRO check_standards, xcorl=xcorl, ccorr=ccorr, contf=contf, showplot=showplot
 
   ;file is big, best to read it in only once
   atrans=XMRDFITS('/home/enewton/pro/Spextool/data/atrans.fits',0)
@@ -13,7 +13,7 @@ PRO check_standards, ccorr=ccorr, contf=contf, showplot=showplot
   
   ; telluric-corrected spectrum
   file_tc = spec_dir+stars[0]+"_tc.fits"
-  std_tc0 = MRDFITS(file_tc)
+  std_tc0 = MRDFITS(file_tc, /silent)
   std_tc0[*,0,*]=std0[*,0,*]	; want to use original wavelength array
   stdrv = rvs[0]
 
@@ -23,9 +23,9 @@ PRO check_standards, ccorr=ccorr, contf=contf, showplot=showplot
     std_tc = std_tc0
 
     file = spec_dir+star+".fits" 
-    data = MRDFITS(file,0,hdr)
+    data = MRDFITS(file,0,hdr, /silent)
     file_tc = spec_dir+star+"_tc.fits"
-    data_tc = MRDFITS(file_tc)
+    data_tc = MRDFITS(file_tc, /silent)
 
     print, "Star is: ", star
     print, "File is: ", file
@@ -42,7 +42,8 @@ PRO check_standards, ccorr=ccorr, contf=contf, showplot=showplot
       spixscale=pixscale, spolydegree=polydegree, $ ; standard is from same set-up 
       wrange=wrange, trange=trange, $
       shft=myshft, s_shft=s_shft, rv=myrv, $
-      showplot=showplot, torest=rv0, ccorr=ccorr, $
+      showplot=showplot, torest=rv0, $
+      ccorr=ccorr, xcorl=xcorl, $
       contf=contf, frac=frac, sbin=sbin
 
     print, "Measured absolute RV:", myrv
