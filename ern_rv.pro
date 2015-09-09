@@ -8,7 +8,7 @@ FUNCTION SPLINE_CONT, int, frac=frac, sbin=sbin, showplot=showplot
 	x = FLTARR(sbin) ; spline arrays
 	y = FLTARR(sbin) ; spline arrays
 	
-	binsize = fix(N_ELEMENTS(int)/sbin)
+	binsize = long(N_ELEMENTS(int)/sbin)
 	FOR b=0,sbin-1 DO BEGIN
 		i1 = binsize*b
 		i2 = binsize*(b+1)
@@ -149,7 +149,7 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	
 	ENDIF
 
-	IF NOT KEYWORD_SET(corr_range) THEN corr_range=20
+	IF NOT KEYWORD_SET(corr_range) THEN corr_range=fix(20*.0005/pixscale)
 	IF KEYWORD_SET(xcorl) THEN BEGIN
 		xcorl, flat_std, flat_obj, corr_range, shft, chi, minchi, plot=showplot, print=showplot
 	ENDIF ELSE IF KEYWORD_SET(ccorr) THEN BEGIN
