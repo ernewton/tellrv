@@ -149,7 +149,7 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	
 	ENDIF
 
-	IF NOT KEYWORD_SET(corr_range) THEN corr_range=fix(20*.0005/pixscale)
+	IF NOT KEYWORD_SET(corr_range) THEN corr_range=fix(10*.0005/pixscale)
 	IF KEYWORD_SET(xcorl) THEN BEGIN
 		xcorl, flat_std, flat_obj, corr_range, shft, chi, minchi, plot=showplot, print=showplot
 	ENDIF ELSE IF KEYWORD_SET(ccorr) THEN BEGIN
@@ -184,7 +184,7 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	
 		erase & multiplot, [1,3]
 		
-		plot, pix_fiducial, int_obj/MEAN(int_obj), /xsty
+		plot, pix_fiducial, int_obj/MEAN(int_obj), /xsty, title='Shifting observed to match standard'
 		oplot, pix_fiducial, int_std/MEAN(int_std)-0.4, co=2
 		oplot, pix_shifted, int_obj/MEAN(int_obj)-0.2, co=3
 		oplot, [N_ELEMENTS(wl_vector)/5,N_ELEMENTS(wl_vector)/5], [0,2],linestyle=2
@@ -206,10 +206,10 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 		oplot, std[*,0], std[*,1]/MEAN(std[WHERE(FINITE(std[*,1])),1])-0.4, co=2
 		oplot, data[*,0]-offset*data[*,0], data[*,1]/MEAN(data[roi,1])-0.2, co=3
 
-		print, 'The radial velocity is ', RV0
+; 		print, 'The radial velocity is ', RV0
 		
-; 		wait, 2
-		stop
+		wait, 2
+		multiplot, /default
 	ENDIF
 
 END

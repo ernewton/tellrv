@@ -1,31 +1,5 @@
 
 
-;============================================
-; FUNCTION DO_BARY
-; get and apply heliocentric correction
-
-
-
-FUNCTION DO_RVSHFTS, rv0, hdr, shdr, rv_std=rv_std, bc=hcorr
-
-
-	; barycentric correction
-	hcorr=GET_BARY(hdr)
-	
-	; offset from standard star
-	hcorr_std=GET_BARY(shdr)
-	IF NOT KEYWORD_SET(rv_std) THEN rv_std=18.2
-	RVoff=rv_std-hcorr_std
-	
-	; heliocentric corrected absolute RV
-	RV=RV0+hcorr+RVoff
-	
-	RETURN, rv
-
-END
-
-
-
 
 PRO NIR_RV, order, mydata, hdr, $
 	mydata_tc, mystd, mystd_tc, shdr, stdrv=stdrv, $
@@ -33,7 +7,9 @@ PRO NIR_RV, order, mydata, hdr, $
 	polydegree=plorder, pixscale=pixscale, $
 	spolydegree=s_plorder, spixscale=s_pixscale, $
 	trange=trange, wrange=wrange, $
-	shft=shft, s_shft=s_shft, rv=rv, torest=torest, $
+	smshft=s_mshft, mshft=mshft, $ ; linear shift in microns
+	shftarr=shft, $
+	rv=rv, torest=torest, $
 	showplot=showplot, chi=chi, corr_range=corr_range, maxshift=maxshift, ccorr=ccorr, xcorl=xcorl, $
 	contf=contf, frac=frac, sbin=sbin
 
@@ -57,24 +33,17 @@ PRO NIR_RV, order, mydata, hdr, $
 	TELL_MODEL, order, atrans, data, hdr, data_new, atrans_new=atrans_new, $
 		plorder=plorder, trange=trange, oversamp=oversamp, $
 		pixscale=pixscale, maxshft=maxshft, showplot=showplot, $
-		res=res, shft=shft, origcont=origcont
+		res=res, shft=mshft, origcont=origcont
 
 	IF KEYWORD_SET(showplot) THEN BEGIN
 
-; 		erase & multiplot, [1,2]
-; 		plot, data[*,0], data[*,1]/origcont, yrange=[0,1.2], xrange=trange
-; 		oplot, atrans[*,0], atrans[*,1], co=2, linestyle=0
-; 		al_legend, ['unshifted, normalized data', 'original atrans'], color=[1,2], linestyle=0, /right, /bottom
-; 		multiplot
-
 		erase & multiplot, /default
-		plot, data[*,0], data[*,1]/origcont,yrange=[0,1.2], xrange=trange
+		plot, data[*,0], data[*,1]/origcont, xrange=trange, /xsty, yrange=[0,1.5], title='Resulting absolute wavelength calibration (data)'
 		oplot, data_new[*,0], data_new[*,1], co=7
-		oplot, data[*,0]+shft, data[*,1]/origcont, co=5, linestyle=1
 		oplot, atrans_new[*,0], atrans_new[*,1], co=2, linestyle=0
 		oplot, [trange[0], trange[0]], [0,2], co=4, linestyle=2
 		oplot, [trange[1], trange[1]], [0,2], co=4, linestyle=2
-		al_legend, ['shifted, normalized, interpolated data', 'scaled, interpolated atrans'], color=[1,2], linestyle=0, /right, /bottom
+		al_legend, ['input data','shifted, normalized, interpolated data', 'scaled, interpolated atrans'], color=[1,7,2], linestyle=0, /right, /top
 
 		wait, 2
 
@@ -102,37 +71,34 @@ PRO NIR_RV, order, mydata, hdr, $
 	IF KEYWORD_SET(showplot) THEN BEGIN
 
 		erase & multiplot, /default
-		plot, std[*,0], std[*,1]/s_origcont,yrange=[0,1.2], xrange=trange
-		oplot, std_new[*,0], std_new[*,1], co=7
-		oplot, std[*,0]+s_shft, std[*,1]/s_origcont, co=5, linestyle=1
+		plot, data[*,0], data[*,1]/origcont, xrange=trange, /xsty, yrange=[0,1.5], title='Resulting absolute wavelength calibration (standard)'
+		oplot, data_new[*,0], data_new[*,1], co=7
 		oplot, atrans_new[*,0], atrans_new[*,1], co=2, linestyle=0
 		oplot, [trange[0], trange[0]], [0,2], co=4, linestyle=2
 		oplot, [trange[1], trange[1]], [0,2], co=4, linestyle=2
-		al_legend, ['shifted, normalized, interpolated data', 'scaled, interpolated atrans'], color=[1,2], linestyle=0, /right, /bottom
+		al_legend, ['input data','shifted, normalized, interpolated data', 'scaled, interpolated atrans'], color=[1,7,2], linestyle=0, /right, /top
 		
 		wait, 2
 
 	ENDIF
 
-	; shift telluric corrected data
+	; shift telluric corrected data to absolute wavelength
 	data_tc_new = data_tc
-	data_tc_new[*,0] = data_tc[*,0]+shft
+	data_tc_new[*,0] = data_tc[*,0]+mshft
 
-	; shift telluric corrected standard
+	; shift telluric corrected standard to absolute wavelength
 	std_tc_new = std_tc
 	std_tc_new[*,0] = std_tc[*,0]+s_shft		
 
 	ERN_RV, data_tc_new, std_tc_new, wrange=wrange, pixscale=pixscale, rv0=rv0, showplot=showplot, chi=chi, corr_range=corr_range, ccorr=ccorr, xcorl=xcorl, contf=contf, frac=frac, sbin=sbin
 
-	rv=DO_RVSHFTS(rv0, hdr, shdr, bc=bc, rv_std=stdrv)
+	rv=DO_RVSHIFTS(rv0, hdr, shdr, bc=bc, rv_std=stdrv)
 	torest=rv-bc
 ; 		print, 'shifts', shft, s_shft
 	; shift is now the exact vector you need
 
-	shft = shft - data_tc[*,0]*rv0/(3.e5)
+	shft = mshft - data_tc[*,0]*rv0/(3.e5)
 ; 	print, 'RVs', rv, bc, torest
-
-print, "max shift", maxshft
 
 END
 

@@ -155,7 +155,7 @@ PRO TELL_MODEL, order, atrans, data, hdr, $
 		print, 'shift in microns', shft, size(shft)
 
 		erase & multiplot, [1,2]
-		plot, lambda_interp, data_interp
+		plot, lambda_interp, data_interp, /xsty, xrange=trange, /ynozero
 		oplot, [trange[0], trange[0]], [-20,5000], co=4, linestyle=2
 		oplot, [trange[1], trange[1]], [-20,5000], co=4, linestyle=2
 		IF order EQ 4 THEN adj=1. ELSE adj=2.
@@ -164,7 +164,7 @@ PRO TELL_MODEL, order, atrans, data, hdr, $
 		al_legend, ['original interpolated data', 'unshifted atrans model', 'shifted atrans model'], color=[1,3,2], linestyle=[0,2,2], /right
 		multiplot
 
-		plot, lambda_interp, data_interp/cont, yrange=[0,1.1], xrange=trange
+		plot, lambda_interp, data_interp/cont, xrange=trange, /xsty, /ynozero
 		oplot, [0,3],[1,1], co=4, linestyle=2
 		oplot, lambda_interp+shft, data_interp/cont, co=7
 		oplot, lambda_interp, (atrans_interp)^res[1], co=2, linestyle=2
@@ -173,9 +173,10 @@ PRO TELL_MODEL, order, atrans, data, hdr, $
 		oplot, [trange[1], trange[1]], [0,2], co=4, linestyle=2
 		al_legend, ['unshifted, normalized data', 'shifted, normalized data', 'original atrans','original, interpolated atrans'], color=[1,7,2,2], linestyle=[0,0,1,2], /right, /bottom
 
-; 		wait, 2
+		multiplot,/default
+		wait, 2
+; stop
 	ENDIF
-	multiplot,/default
 
 
 END
