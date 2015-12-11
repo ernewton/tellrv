@@ -19,7 +19,7 @@ END
 ; Function for MPFIT
 
 
-FUNCTION TELL_FUNC, p, lambda=lambda, atrans=atrans, data=data, model=model, cont=cont, pixscale=pixscale, oversamp=oversamp, shft=shft
+FUNCTION TELL_FUNC, p, lambda=lambda, atrans=atrans, data=data, model=model, cont=cont, pixscale=pixscale, oversamp=oversamp, shft=shft, mask=mask
 
 	; scale atrans by a constant to account for precipital water vapor and airmass differnces
 	atrans_new=atrans^(p[1])
@@ -35,10 +35,9 @@ FUNCTION TELL_FUNC, p, lambda=lambda, atrans=atrans, data=data, model=model, con
 
 	atrans_curved = atrans_new*poly
 
+	diff=(data-atrans_curved)
 	IF KEYWORD_SET(mask) THEN $
-		diff=((data-atrans_curved)*mask) $
-	ELSE $
-		diff=(data-atrans_curved)
+		diff=(diff*mask)		
 
 ; 	plot, lambda, data
 ; 	oplot, lambda, atrans_curved, co=2
@@ -124,8 +123,8 @@ PRO TELL_MODEL, order, atrans, data, hdr, $
 	parinfo[1].value=2.d			; 2 is typical for all but the K band.
 	parinfo[0].limited=[1.,1.]		; limit the shift in pixels to...
 	parinfo[0].limits=[-maxshft,maxshft]	; ... 0.0015 microns
-; 	parinfo[1].limited[0]=0			; lower limit on the scaling
-; 	parinfo[1].limits[0]=0.5
+	parinfo[1].limited=[1.,0.]			; lower limit on the scaling
+	parinfo[1].limits=[0.,10.]
 
 	; run MPFIT
 	res = MPFIT('tell_func',parinfo=parinfo,functargs=fa, dof=dof, bestnorm=chi2,covar=covar, quiet=1)
@@ -175,7 +174,7 @@ PRO TELL_MODEL, order, atrans, data, hdr, $
 
 		multiplot,/default
 		wait, 2
-; stop
+
 	ENDIF
 
 

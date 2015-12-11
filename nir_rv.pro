@@ -10,7 +10,7 @@ PRO NIR_RV, order, mydata, hdr, $
 	smshft=s_mshft, mshft=mshft, $ ; linear shift in microns
 	shftarr=shft, $
 	rv=rv, torest=torest, $
-	showplot=showplot, chi=chi, corr_range=corr_range, maxshift=maxshift, ccorr=ccorr, xcorl=xcorl, $
+	showplot=showplot, chi=chi, corr_range=corr_range, maxshift=maxshift, ccorr_fxn=ccorr_fxn, $
 	contf=contf, frac=frac, sbin=sbin
 
 	data = mydata
@@ -66,7 +66,7 @@ PRO NIR_RV, order, mydata, hdr, $
 	TELL_MODEL, order, atrans, std, shdr, std_new, atrans_new=atrans_new, $
 	plorder=plorder, trange=trange, oversamp=oversamp, $
 	pixscale=s_pixscale, maxshft=maxshft, showplot=showplot, $
-	res=s_res, shft=s_shft, origcont=s_origcont
+	res=s_res, shft=s_mshft, origcont=s_origcont
 
 	IF KEYWORD_SET(showplot) THEN BEGIN
 
@@ -88,9 +88,9 @@ PRO NIR_RV, order, mydata, hdr, $
 
 	; shift telluric corrected standard to absolute wavelength
 	std_tc_new = std_tc
-	std_tc_new[*,0] = std_tc[*,0]+s_shft		
+	std_tc_new[*,0] = std_tc[*,0]+s_mshft		
 
-	ERN_RV, data_tc_new, std_tc_new, wrange=wrange, pixscale=pixscale, rv0=rv0, showplot=showplot, chi=chi, corr_range=corr_range, ccorr=ccorr, xcorl=xcorl, contf=contf, frac=frac, sbin=sbin
+	ERN_RV, data_tc_new, std_tc_new, wrange=wrange, pixscale=pixscale, rv0=rv0, showplot=showplot, chi=chi, corr_range=corr_range, ccorr_fxn=ccorr_fxn, contf=contf, frac=frac, sbin=sbin
 
 	rv=DO_RVSHIFTS(rv0, hdr, shdr, bc=bc, rv_std=stdrv)
 	torest=rv-bc

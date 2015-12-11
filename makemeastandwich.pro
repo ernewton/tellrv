@@ -15,7 +15,7 @@ pro makemeastandwich
   for i=0,5 do begin
 
     order = i
-    order_variables, hdr, order, wrange, trange, pixscale, polydegree, telescope="irtf"
+    order_variables, hdr, order, wrange, trange, pixscale, polydegree, instrument="spex"
     
     std = std0
     std_tc = std_tc0

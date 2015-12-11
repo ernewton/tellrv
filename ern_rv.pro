@@ -12,6 +12,7 @@ FUNCTION SPLINE_CONT, int, frac=frac, sbin=sbin, showplot=showplot
 	FOR b=0,sbin-1 DO BEGIN
 		i1 = binsize*b
 		i2 = binsize*(b+1)
+		IF i2 GE N_ELEMENTS(int) THEN i2=N_ELEMENTS(int)-1
 		bin = xall[i1:i2]
 		fbin = int[bin]
 
@@ -90,10 +91,10 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	wrange=wrange, $ ; wavelenghts to flatten over,
 	oversamp=oversamp, $ ; oversampling multiple
 	zero=zero, nan=nan, $ ; bad data flags
-	xcorl=xcorl, ccorr=ccorr, $ ; choosing cross-correlation routine
+	ccorr_fxn=ccorr_fxn, $ ; choosing cross-correlation routine
 	corr_range=corr_range, $ ; cross-corr range
 	contf=contf, frac=frac, sbin=sbin, $ ; for flattening spectrum
-	verbose=verbose
+	verbose=verbose, mask=mask
 
 	IF KEYWORD_SET(showplot) THEN showplot=1
 
@@ -114,13 +115,12 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	wl_vector = SCALE_VECTOR(FINDGEN((end_wl-start_wl)*oversamp*mean(data[roi,0])/pixscale), start_wl, end_wl) 
 
 	IF KEYWORD_SET(zero) THEN BEGIN
-	  roi = WHERE(data[*,1] GT 0)
+	  roi = roi[WHERE(data[roi,1] GT 0)]
 	  IF KEYWORD_SET(verbose) THEN print, "ERN_RV: using non-zero fluxes."
 	ENDIF ELSE IF KEYWORD_SET(nan) THEN BEGIN
-	  roi = WHERE(FINITE(data[*,1]))
+	  roi = roi[WHERE(FINITE(data[roi,1]))]
 	  IF KEYWORD_SET(verbose) THEN print, "ERN_RV: using finite fluxes."
 	ENDIF ELSE BEGIN
-	  roi = FINDGEN(N_ELEMENTS(data[*,1]))
 	  IF KEYWORD_SET(verbose) THEN print, "ERN_RV: using all provided data."
 	ENDELSE
 
@@ -149,10 +149,11 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	
 	ENDIF
 
-	IF NOT KEYWORD_SET(corr_range) THEN corr_range=fix(10*.0005/pixscale)
-	IF KEYWORD_SET(xcorl) THEN BEGIN
+	IF NOT KEYWORD_SET(corr_range) THEN corr_range=fix(20*.0005/pixscale)
+	IF NOT KEYWORD_SET(ccorr_fxn) THEN ccorr_fxn='c_correlate'
+	IF ccorr_fxn EQ 'xcorl' THEN BEGIN
 		xcorl, flat_std, flat_obj, corr_range, shft, chi, minchi, plot=showplot, print=showplot
-	ENDIF ELSE IF KEYWORD_SET(ccorr) THEN BEGIN
+	ENDIF ELSE IF ccorr_fxn EQ 'c_correlate' THEN BEGIN
 		lag = indgen(corr_range*2)-corr_range
 		result = c_correlate(flat_obj, flat_std, lag) ; opposite order
 		pk = MAX(result,p)
@@ -165,9 +166,9 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 		ENDIF ELSE $
 			offset = 0.
 		shft = lag[p] + offset
-	ENDIF ELSE BEGIN
+	ENDIF ELSE IF ccorr_fxn EQ 'cross_correlate' THEN BEGIN
 		cross_correlate, flat_std, flat_obj, shft, result, width=corr_range*2
-	ENDELSE
+	ENDIF ELSE message, 'Cross-correlation routine not implemented: ', ccorr_fxn
 
 	; these are the pixel arrays
 	pix_fiducial = MAKE_ARRAY(N_ELEMENTS(wl_vector),/index)
@@ -185,8 +186,8 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 		erase & multiplot, [1,3]
 		
 		plot, pix_fiducial, int_obj/MEAN(int_obj), /xsty, title='Shifting observed to match standard'
-		oplot, pix_fiducial, int_std/MEAN(int_std)-0.4, co=2
 		oplot, pix_shifted, int_obj/MEAN(int_obj)-0.2, co=3
+		oplot, pix_fiducial, int_std/MEAN(int_std)-0.4, co=2
 		oplot, [N_ELEMENTS(wl_vector)/5,N_ELEMENTS(wl_vector)/5], [0,2],linestyle=2
 		oplot, [2*N_ELEMENTS(wl_vector)/5,2*N_ELEMENTS(wl_vector)/5], [0,2],linestyle=2
 		oplot, [3*N_ELEMENTS(wl_vector)/5,3*N_ELEMENTS(wl_vector)/5], [0,2],linestyle=2
@@ -195,21 +196,22 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 		multiplot
 		
 		plot, wl_vector, flat_obj, yrange=[0.3,1.2], /xsty
-		oplot, wl_vector, flat_std-0.4, co=2
 		oplot, wl_shifted, flat_obj-0.2, co=3
+		oplot, wl_vector, flat_std-0.4, co=2
 		oplot, [ALOG(2.2063),ALOG(2.2063)],[0,5],linestyle=2
 		oplot, [ALOG(2.26267),ALOG(2.26267)],[0,5],linestyle=2
 
 		multiplot
 		
 		plot, data[*,0], data[*,1]/MEAN(data[roi,1]), xrange=wrange, /xsty
-		oplot, std[*,0], std[*,1]/MEAN(std[WHERE(FINITE(std[*,1])),1])-0.4, co=2
 		oplot, data[*,0]-offset*data[*,0], data[*,1]/MEAN(data[roi,1])-0.2, co=3
+		oplot, std[*,0], std[*,1]/MEAN(std[WHERE(FINITE(std[roi,1])),1])-0.4, co=2
 
 ; 		print, 'The radial velocity is ', RV0
+		al_legend, ['Object','Shifted object', 'Standard'], color=[1,3,2], linestyle=[0,0,0], /right, /bottom
+		multiplot, /default
 		
 		wait, 2
-		multiplot, /default
 	ENDIF
 
 END

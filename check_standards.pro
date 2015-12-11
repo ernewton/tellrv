@@ -1,7 +1,7 @@
 PRO check_standards, xcorl=xcorl, ccorr=ccorr, contf=contf, showplot=showplot
 
   ;file is big, best to read it in only once
-  atrans=XMRDFITS('/home/enewton/pro/Spextool/data/atrans.fits',0)
+  atrans=MRDFITS('/home/enewton/pro/Spextool/data/atrans.fits',0)
 
   ; list of standard stars and their RVs
   READCOL, 'standards.txt', stars, sptypes, rvs, skipline=1, format='(A,I,F)'
@@ -34,16 +34,16 @@ PRO check_standards, xcorl=xcorl, ccorr=ccorr, contf=contf, showplot=showplot
 
     data_tc[*,0,*]=data[*,0,*]
 
-    order_variables, hdr, order, wrange, trange, pixscale, polydegree, telescope="irtf"
+    order_variables, hdr, order, wrange, trange, pixscale, polydegree, instrument="spex"
     NIR_RV, order, data[*,*,order], hdr, $
       data_tc[*,*,order], std[*,*,order], std_tc[*,*,order], shdr, $
       atrans=atrans, $
       pixscale=pixscale, polydegree=polydegree, $
       spixscale=pixscale, spolydegree=polydegree, $ ; standard is from same set-up 
       wrange=wrange, trange=trange, $
-      shft=myshft, s_shft=s_shft, rv=myrv, $
+      mshft=mshft, smshft=smshft, rv=myrv, $
       showplot=showplot, torest=rv0, $
-      ccorr=ccorr, xcorl=xcorl, $
+      ccorr_fxn=ccor_fxn, $
       contf=contf, frac=frac, sbin=sbin
 
     print, "Measured absolute RV: ", myrv
