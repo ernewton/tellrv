@@ -17,5 +17,7 @@ There are two options for continuum fitting: a spline-based routine and the rout
 # Reference
 If you use this code in published research, please cite Newton et al. (2014): http://adslabs.org/adsabs/abs/2014AJ....147...20N/
 
+[![DOI](https://zenodo.org/badge/4705/ernewton/tellrv.svg)](https://zenodo.org/badge/latestdoi/4705/ernewton/tellrv)
+
 # License
 Copyright 2015 Elisabeth R. Newton. Licensed under the terms of the MIT License (see LICENSE).
