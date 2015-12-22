@@ -1,3 +1,6 @@
+;============================================
+; Test code functionality and usage example
+
 PRO check_standards, ccorr_fxn=ccorfxn, contf=contf, showplot=showplot
 
   ; read in atmospheric transmission spectrum (Lord, 1992)
@@ -48,6 +51,7 @@ PRO check_standards, ccorr_fxn=ccorfxn, contf=contf, showplot=showplot
 
     data_tc[*,0,*]=data[*,0,*] ;  wavelength was modified during reduction
 
+    ; J, H, and K bands independently
     temp = FLTARR(3)
     FOR order=0,2 DO BEGIN
       ; get pertinant variables for SpeX

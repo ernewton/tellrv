@@ -1,6 +1,5 @@
-; ##################
+;============================================
 ; get order variables for RV fitting
-; ##################
 
 PRO order_variables, hdr, order, wrange, trange, pixscale, polydegree, instrument=instrument
 

@@ -95,7 +95,7 @@ END
 
 
 ;============================================
-; PRO RV
+; PRO ERN_RV
 ; Find the offset between data and a standard star
 
 

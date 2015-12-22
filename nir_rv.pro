@@ -1,13 +1,3 @@
-; wlcal: flag to indicate that standard star has already been shifted to rest wavelength
-; stdrv: RV of standard star
-;
-; information on spectra
-;
-; pixscale
-; spixscale
-;
-;
-
 ;+
 ; NAME:
 ;	NIR_RV
@@ -64,37 +54,38 @@
 ; EXAMPLE:
 ;	ALSO SEE CHECK_STANDARDS.PRO FOR MORE INFORMATION
 ;
-	; read in data
-	data = MRDFITS('spec/J0727+0513.fits',0,hdr)
-	data_tc  = MRDFITS('spec/J0727+0513_tc.fits')
-	data_tc[*,0,*]=data[*,0,*] ; wavelength was modified during reduction
-
-	std = MRDFITS('spec/J0727+0513.fits',0,shdr)
-	std_tc = MRDFITS('spec/J0727+0513_tc.fits',0,shdr)
-	std_tc[*,0,*]=std[*,0,*] ; wavelength was modified during reduction
-
-	; get pertinent info
-	order = 1
-	order_variables, hdr, order, wrange, trange, pixscale, polydegree, instrument="spex"
-	
-	; run program
-	NIR_RV, data_tc[*,*,order], hdr, data[*,*,order], $
-	  std_tc[*,*,order], shdr, std[*,*,order], stdrv=18.2, $
-	  pixscale=pixscale, polydegree=polydegree, $
-	  spixscale=pixscale, spolydegree=polydegree, $
-	  wrange=wrange, trange=trange, $
-	  shftarr=shftarr, rv=myrv
-	print, "RV: ", myrv ; answer should be 18.2(+-0.1)
-	data_rest = data_tc[*,*,order]
-	data_rest[*,0] = data_rest + shftarr ; ready to use
-
+; 	; read in data
+; 	data = MRDFITS('spec/J0727+0513.fits',0,hdr)
+; 	data_tc  = MRDFITS('spec/J0727+0513_tc.fits')
+; 	data_tc[*,0,*]=data[*,0,*] ; wavelength was modified during reduction
+; 
+; 	std = MRDFITS('spec/J0727+0513.fits',0,shdr)
+; 	std_tc = MRDFITS('spec/J0727+0513_tc.fits',0,shdr)
+; 	std_tc[*,0,*]=std[*,0,*] ; wavelength was modified during reduction
+; 
+; 	; get pertinent info
+; 	order = 1
+; 	order_variables, hdr, order, wrange, trange, pixscale, polydegree, instrument="spex"
+; 	
+; 	; run program
+; 	NIR_RV, data_tc[*,*,order], hdr, data[*,*,order], $
+; 	  std_tc[*,*,order], shdr, std[*,*,order], stdrv=18.2, $
+; 	  pixscale=pixscale, polydegree=polydegree, $
+; 	  spixscale=pixscale, spolydegree=polydegree, $
+; 	  wrange=wrange, trange=trange, $
+; 	  shftarr=shftarr, rv=myrv
+; 	print, "RV: ", myrv ; answer should be 18.2(+-0.1)
+; 	data_rest = data_tc[*,*,order]
+; 	data_rest[*,0] = data_rest + shftarr ; ready to use
+;
 ; METHOD:
-
+;	Uses telluric features to determine absolute wavelength calibration for the science
+;	target (and optionally the standard star). Cross-correlates to determine the 
+; 	radial velocity relative to the standard star. Calculates absolute radial velocity.
 ;
 ; PROCEDURES USED:
-
-; REVISON HISTORY:
-
+;	tellrv
+;
 ;-
 
 
