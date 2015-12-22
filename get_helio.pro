@@ -6,7 +6,7 @@
 
 
 
-FUNCTION GET_HELIO, hdr, degrees=degrees, barycentric=barycentric, force=force
+FUNCTION GET_HELIO, hdr, degrees=degrees, barycentric=barycentric, force=force, quiet=quiet
 
 	IF N_ELEMENTS(barycentric) EQ 0 THEN barycentric = 1
 
@@ -65,11 +65,11 @@ FUNCTION GET_HELIO, hdr, degrees=degrees, barycentric=barycentric, force=force
 		dec_rad=dec_deg/!RADEG
 		vel = vb[0]*cos(dec_rad)*cos(ra_rad) + $   ;Project velocity toward star
 		      vb[1]*cos(dec_rad)*sin(ra_rad) + vb[2]*sin(dec_rad) 
-		print, "GET_HELIO: returning barycentric."
+		IF ~KEYWORD_SET(quiet) THEN print, "GET_HELIO: returning barycentric."
 		RETURN, vel
 	ENDIF ELSE BEGIN
 		hcorr = heliocentric(ra_deg,dec_deg,jd=jdate,longitude=lon,latitude=lat, altitude=alt)
-		print, "GET_HELIO: returning heliocentric."
+		IF ~KEYWORD_SET(quiet) THEN print, "GET_HELIO: returning heliocentric."
 		RETURN, -hcorr
 	ENDELSE
 

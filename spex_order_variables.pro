@@ -31,6 +31,12 @@ CASE order OF
 		pixscale = FXPAR(hdr, 'DISPO07')
 		polydegree = 4
 	END
+	5: BEGIN
+		wrange = [0.81, 0.9]
+		trange = [0.81, 0.9]
+		pixscale = FXPAR(hdr, 'DISPO08')
+		polydegree = 5
+	END
 	ELSE: message, 'Order is', order, 'This is an invalid order'
 ENDCASE
 

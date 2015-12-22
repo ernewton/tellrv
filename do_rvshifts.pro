@@ -4,15 +4,15 @@
 
 
 
-FUNCTION DO_RVSHIFTS, rv0, hdr, shdr, rv_std=rv_std, bc=hcorr
+FUNCTION DO_RVSHIFTS, rv0, hdr, shdr, rv_std=rv_std, bc=hcorr, quiet=quiet
 
 
 	; barycentric correction
-	hcorr=GET_HELIO(hdr)
+	hcorr=GET_HELIO(hdr, quiet=quiet)
 	
 	; offset from standard star
-	hcorr_std=GET_HELIO(shdr)
-	IF NOT KEYWORD_SET(rv_std) THEN rv_std=18.2
+	hcorr_std=GET_HELIO(shdr, quiet=quiet)
+	IF NOT KEYWORD_SET(rv_std) THEN rv_std=0.
 	RVoff=rv_std-hcorr_std
 	
 	; heliocentric corrected absolute RV

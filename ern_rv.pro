@@ -1,15 +1,15 @@
 FUNCTION SPLINE_CONT, int, frac=frac, sbin=sbin, showplot=showplot
 
-	IF ~KEYWORD_SET(frac) THEN frac=0.2
-	IF ~KEYWORD_SET(sbin) THEN sbin=10
+	IF ~KEYWORD_SET(frac) THEN frac1=0.2
+	IF ~KEYWORD_SET(sbin) THEN sbin1=10 ELSE sbin1=sbin
 	ordrd = SORT(int)
 	
 	xall = FINDGEN(N_ELEMENTS(int))
-	x = FLTARR(sbin) ; spline arrays
-	y = FLTARR(sbin) ; spline arrays
+	x = FLTARR(sbin1) ; spline arrays
+	y = FLTARR(sbin1) ; spline arrays
 	
-	binsize = long(N_ELEMENTS(int)/sbin)
-	FOR b=0,sbin-1 DO BEGIN
+	binsize = long(N_ELEMENTS(int)/sbin1)
+	FOR b=0,sbin1-1 DO BEGIN
 		i1 = binsize*b
 		i2 = binsize*(b+1)
 		IF i2 GE N_ELEMENTS(int) THEN i2=N_ELEMENTS(int)-1
@@ -50,23 +50,38 @@ END
 
 FUNCTION FLATTEN, int, showplot=showplot, contf=contf, frac=frac, sbin=sbin
 
-
+	IF ~KEYWORD_SET(sbin) THEN BEGIN
+	  sbin1 = 10
+	  sbin2 = 6
+	ENDIF ELSE BEGIN
+	  sbin1=sbin
+	  sbin2=sbin
+	ENDELSE
+	
+	IF ~KEYWORD_SET(frac) THEN BEGIN
+	  frac1 = 0.4
+	  frac2 = 0.2
+	ENDIF ELSE BEGIN
+	  frac1 = frac
+	  frac2 = frac
+	ENDELSE
+	
 	IF KEYWORD_SET(showplot) THEN showplot=2
 
 	IF KEYWORD_SET(contf) THEN BEGIN
 	
-		CONTF, int, c1, nord=4, sbin=10,frac=0.5, plot=showplot, mask=fin, xspline=xspline, yspline=yspline
+		CONTF, int, c1, nord=4, sbin=sbin1,frac=frac1, plot=showplot, mask=fin, xspline=xspline, yspline=yspline
 		t1=SPLINE(xspline,yspline,FINDGEN(N_ELEMENTS(int)))
 		
-		CONTF, int/t1, c2, nord=4, sbin=6,frac=0.2, plot=showplot, mask=fin, xspline=xspline, yspline=yspline
+		CONTF, int/t1, c2, nord=4, sbin=sbin2,frac=frac2, plot=showplot, mask=fin, xspline=xspline, yspline=yspline
 		t2=SPLINE(xspline,yspline,FINDGEN(N_ELEMENTS(int)))
 		
 		flat=int/t1/t2
 		
 	ENDIF ELSE BEGIN
 	
-		t1 = SPLINE_CONT(int, sbin=10, frac=0.4, showplot=showplot)
-		t2 = SPLINE_CONT(int/t1, sbin=10, frac=0.2, showplot=showplot)
+		t1 = SPLINE_CONT(int, sbin=sbin1, frac=frac1, showplot=showplot)
+		t2 = SPLINE_CONT(int/t1, sbin=sbin2, frac=frac2, showplot=showplot)
 		flat=int/t1/t2
 	
 	ENDELSE
@@ -94,20 +109,16 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	ccorr_fxn=ccorr_fxn, $ ; choosing cross-correlation routine
 	corr_range=corr_range, $ ; cross-corr range
 	contf=contf, frac=frac, sbin=sbin, $ ; for flattening spectrum
-	verbose=verbose, mask=mask
+	quiet=quiet, mask=mask
 
 	IF KEYWORD_SET(showplot) THEN showplot=1
+	IF ~KEYWORD_SET(wrange) THEN wrange = [data[0,0],data[-1,0]]
 
 	; select wavelength range (log lambda)
-	IF KEYWORD_SET(wrange) THEN BEGIN
-		start_wl = ALOG(wrange[0])
-		end_wl = ALOG(wrange[1])
-		roi = WHERE(data[*,0] GT wrange[0] AND data[*,0] LT wrange[1])
-	ENDIF ELSE BEGIN
-		start_wl = ALOG(MIN(data[*,0]))	
-		end_wl = ALOG(MAX(data[*,0]))	
-		roi = FINDGEN(N_ELEMENTS(data[*,0]))
-	ENDELSE
+	start_wl = ALOG(wrange[0])
+	end_wl = ALOG(wrange[1])
+	roi = WHERE(data[*,0] GE wrange[0] AND data[*,0] LE wrange[1])
+
 
 	; create oversampled grid uniformly spaced in log lambda	
 	IF ~KEYWORD_SET(oversamp) THEN $
@@ -116,12 +127,12 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 
 	IF KEYWORD_SET(zero) THEN BEGIN
 	  roi = roi[WHERE(data[roi,1] GT 0)]
-	  IF KEYWORD_SET(verbose) THEN print, "ERN_RV: using non-zero fluxes."
+	  IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: using non-zero fluxes."
 	ENDIF ELSE IF KEYWORD_SET(nan) THEN BEGIN
 	  roi = roi[WHERE(FINITE(data[roi,1]))]
-	  IF KEYWORD_SET(verbose) THEN print, "ERN_RV: using finite fluxes."
+	  IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: using finite fluxes."
 	ENDIF ELSE BEGIN
-	  IF KEYWORD_SET(verbose) THEN print, "ERN_RV: using all provided data."
+	  IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: using all provided data."
 	ENDELSE
 
 	; interpolate object and standard onto new grid
@@ -129,6 +140,12 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	int_std = INTERPOL(std[*,1],ALOG(std[*,0]),wl_vector, /spline)	
 
 	; remove continuum
+	IF ~KEYWORD_SET(quiet) THEN BEGIN
+	  IF KEYWORD_SET(contf) THEN print, "ERN_RV: using contf routine for flattening" $
+	  ELSE print, "ERN_RV: using spline flattening routine"
+	  IF KEYWORD_SET(frac) THEN print, "ERN_RV: using user-supplied value for frac in FLATTEN. Are you sure?"
+	  IF KEYWORD_SET(sbin) THEN print, "ERN_RV: using user-supplied value for sbin in FLATTEN. Are you sure?"
+	ENDIF
 	flat_obj=FLATTEN(int_obj, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
 	flat_std=FLATTEN(int_std, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
 
@@ -152,8 +169,10 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	IF NOT KEYWORD_SET(corr_range) THEN corr_range=fix(20*.0005/pixscale)
 	IF NOT KEYWORD_SET(ccorr_fxn) THEN ccorr_fxn='c_correlate'
 	IF ccorr_fxn EQ 'xcorl' THEN BEGIN
+		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using xcorl"
 		xcorl, flat_std, flat_obj, corr_range, shft, chi, minchi, plot=showplot, print=showplot
 	ENDIF ELSE IF ccorr_fxn EQ 'c_correlate' THEN BEGIN
+		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using c_correlate + modifications"
 		lag = indgen(corr_range*2)-corr_range
 		result = c_correlate(flat_obj, flat_std, lag) ; opposite order
 		pk = MAX(result,p)
@@ -167,6 +186,7 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 			offset = 0.
 		shft = lag[p] + offset
 	ENDIF ELSE IF ccorr_fxn EQ 'cross_correlate' THEN BEGIN
+		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using cross_correlate"
 		cross_correlate, flat_std, flat_obj, shft, result, width=corr_range*2
 	ENDIF ELSE message, 'Cross-correlation routine not implemented: ', ccorr_fxn
 

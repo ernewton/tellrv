@@ -98,12 +98,15 @@ END
 ; Modify the atmospheric transmission spectrum until it matches the observation to find the necessary wavelength shift
 
 
-PRO TELL_MODEL, order, atrans, data, hdr, $
+PRO TELL_MODEL, atrans, data, hdr, $
 	data_new, atrans_new=atrans_new, $
 	plorder=plorder, trange=trange, maxshft=maxshft, $
 	oversamp=oversamp, pixscale=pixscale, $
 	res=res, shft=shft, origcont=origcont, $
-	showplot=showplot
+	showplot=showplot, quiet=quiet
+	
+	IF ~KEYWORD_SET(quiet) THEN quiet=0
+	IF ~KEYWORD_SET(trange) THEN trange=[data[0,0],data[-1,0]]
 
 	; interpolate data and atrans onto new wavelength grid
 	; data_interp, atrans_interp are interpolated fluxes
@@ -157,8 +160,8 @@ PRO TELL_MODEL, order, atrans, data, hdr, $
 		plot, lambda_interp, data_interp, /xsty, xrange=trange, /ynozero
 		oplot, [trange[0], trange[0]], [-20,5000], co=4, linestyle=2
 		oplot, [trange[1], trange[1]], [-20,5000], co=4, linestyle=2
-		IF order EQ 4 THEN adj=1. ELSE adj=2.
-		oplot, lambda_interp, atrans_interp*cont+adj, co=3, linestyle=2
+; 		IF order EQ 4 THEN adj=1. ELSE adj=2.
+		oplot, lambda_interp, atrans_interp*cont+2., co=3, linestyle=2
 		oplot, lambda_interp, model, co=2
 		al_legend, ['original interpolated data', 'unshifted atrans model', 'shifted atrans model'], color=[1,3,2], linestyle=[0,2,2], /right
 		multiplot
