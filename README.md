@@ -2,22 +2,41 @@
 
 This code measures absolute radial velocities for low-resolution NIR spectra. I use telluric features to provide absolute wavelength calibration, and then cross-correlate with a standard star. To use the code for your star, you will need observations of a standard star (included) and your science target (examples included). You will need both the telluric and non-telluric-corrected spectra and the FITS headers, but no other spectra is required. Orders do not need to be combined. It should work for all extant spectra taken with SpeX on IRTF or similar instruments. 
 
-Please see nir_rv and check_standards for an example of usage. 
+A radial velocity standard, already shifted to rest wavelengths, is included in this installation (`/spec/J0727+0513_rest.fits`). It was created with the program `makemeastandwich.pro`.
 
-Run check_standards to test code.
+## Routines
 
-## Altenrative sub-routines
+### check_standards
+Calculates radial velocities of RV standards. Use to test functionality and as an example of usage.
+
+### nir_rv
+Calculate the radial velocity from a NIR spectrum. Performs both the wavelength calibration and the cross-correlation with a standard star, and takes into account the barycentric velocities and the RV of the standard star.
+
+### ern_rv
+Cross-correlate the science target with the standard star to measure relative radial velocity. See below for notes on the cross-correlation subroutines and flattening subroutines that can be used.
+
+### order_variables
+Get required information from the FITS header and get pre-selected wavelength regions to provide to other routines. If this information is not provided, it will be estimated from the spectrum.
+
+## Atmospheric transmission spectrum
+
+This code requires an atmospheric transmission spectra. I use Lord (1992) ATRANS. This is available in the standard Spextool library and by default the code will look for it there. If you do not have ATRANS, you can download it from: [GEMINI](http://www.gemini.edu/sciops/telescopes-and-sites/observing-condition-constraints/ir-transmission-spectra)
+[SOFIA](https://atran.sofia.usra.edu/cgi-bin/atran/atran.cgi)
+
+## Alternative sub-routines
 
 ### Cross-correlation
-There are three options for cross-correlation routines: xcorl, c_correlate, and cross_correlate. These are used in ern_rv, and can be selected by keyword in the top-level routine nir_rv. c_correlate is the default since I believe it is the most commonly available, and ought to be included exist in any modern IDL distribution. xcorl is not my code, but may be available to you. I prefer the routine cross_correlate which may be available in your installation. xcorl and cross_correlate produce consistent results; I have improved the peak ginding in c_correlate but values may still differ by up to 1 km/s.
+There are three options for cross-correlation routines: `xcorl`, `c_correlate`, and `cross_correlate`. These are used in `ern_rv`, and can be selected by keyword in the top-level routine `nir_rv`. c_correlate is the default since I believe it is the most commonly available, and ought to be included exist in any modern IDL distribution. `xcorl` is not my code, but may be available to you. I prefer the routine `cross_correlate` which may be available in your installation. `xcor`l and `cross_correlate` produce consistent results; I have improved the peak finding after retrieving results from `c_correlate` but values may still differ by up to 1 km/s.
 
 ### Continuum fitting
-There are two options for continuum fitting: a spline-based routine and the routine contf. contf is not my code, but may be available to you. The default spline-based routine is based on contf and is included in this code. The choice is not important in most cases.
+There are two options for continuum fitting: a spline-based routine and the routine `contf`. `contf` is not my code, but may be available to you. The default spline-based routine is based on `contf` and is included in this code. The choice is not important in most cases.
 
-# Reference
+## Reference
+
 If you use this code in published research, please cite Newton et al. (2014): http://adslabs.org/adsabs/abs/2014AJ....147...20N/
 
 [![DOI](https://zenodo.org/badge/4705/ernewton/tellrv.svg)](https://zenodo.org/badge/latestdoi/4705/ernewton/tellrv)
 
-# License
+## License
+
 Copyright 2015 Elisabeth R. Newton. Licensed under the terms of the MIT License (see LICENSE).

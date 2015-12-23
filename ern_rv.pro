@@ -112,17 +112,16 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	quiet=quiet, mask=mask
 
 	IF KEYWORD_SET(showplot) THEN showplot=1
+	IF ~KEYWORD_SET(pixscale) THEN pixscale = abs(median(data[0:-2,0]-data[1:-1,0]))
 	IF ~KEYWORD_SET(wrange) THEN wrange = [data[0,0],data[-1,0]]
+	IF ~KEYWORD_SET(oversamp) THEN oversamp=6. 
 
 	; select wavelength range (log lambda)
 	start_wl = ALOG(wrange[0])
 	end_wl = ALOG(wrange[1])
 	roi = WHERE(data[*,0] GE wrange[0] AND data[*,0] LE wrange[1])
 
-
 	; create oversampled grid uniformly spaced in log lambda	
-	IF ~KEYWORD_SET(oversamp) THEN $
-		oversamp=6. 
 	wl_vector = SCALE_VECTOR(FINDGEN((end_wl-start_wl)*oversamp*mean(data[roi,0])/pixscale), start_wl, end_wl) 
 
 	IF KEYWORD_SET(zero) THEN BEGIN

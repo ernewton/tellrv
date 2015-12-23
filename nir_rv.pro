@@ -105,8 +105,8 @@ PRO NIR_RV, mydata_tc, hdr, mydata, $
 	quiet=quiet, showplot=showplot
 
 	IF ~KEYWORD_SET(quiet) THEN quiet=0
-	IF ~KEYWORD_SET(pixscale) THEN pixscale = median(mydata_tc[0:-2,0]-mydata_tc[1:-1,0])
-	IF ~KEYWORD_SET(spixscale) THEN spixscale = median(mystd_tc[0:-2,0]-mystd_tc[1:-1,0])
+	IF ~KEYWORD_SET(pixscale) THEN pixscale = abs(median(mydata_tc[0:-2,0]-mydata_tc[1:-1,0]))
+	IF ~KEYWORD_SET(spixscale) THEN spixscale = abs(median(mystd_tc[0:-2,0]-mystd_tc[1:-1,0]))
 	IF ~KEYWORD_SET(plorder) THEN plorder = 4
 	IF ~KEYWORD_SET(s_plorder) THEN s_plorder = 4
 	
@@ -118,8 +118,12 @@ PRO NIR_RV, mydata_tc, hdr, mydata, $
 	IF ~KEYWORD_SET(atrans) THEN BEGIN
 		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: Reading atrans from spex directory."
 		atrans=MRDFITS('$SPEX_DIR/data/atrans.fits',0) 
-	ENDIF ELSE IF size(atrans,/type) EQ 7 THEN $; string! 
+	ENDIF ELSE IF size(atrans,/type) EQ 7 THEN BEGIN; string! 
+		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: Reading atrans from file name supplied."		
 		atrans=MRDFITS(atrans,0)
+	ENDIF ELSE $
+		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: atrans array supplied."
+
 		
 	; parameter for oversampling the spectrum; value set by minimum needed for spex echelle
 	oversamp=6.d
@@ -142,6 +146,7 @@ PRO NIR_RV, mydata_tc, hdr, mydata, $
 	; shift telluric corrected data to absolute wavelength
 	data_tc_new = data_tc
 	data_tc_new[*,0] = data_tc[*,0]+mshft
+	
 	IF KEYWORD_SET(showplot) THEN BEGIN
 		erase & multiplot, /default
 		plot, data[*,0], data[*,1]/origcont, xrange=trange, /xsty, yrange=[0,1.5], title='Resulting absolute wavelength calibration (data)'

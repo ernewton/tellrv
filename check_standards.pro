@@ -1,7 +1,7 @@
 ;============================================
 ; Test code functionality and usage example
 
-PRO check_standards, ccorr_fxn=ccorfxn, contf=contf, showplot=showplot
+PRO check_standards, ccorr_fxn=ccorr_fxn, contf=contf, showplot=showplot
 
   ; read in atmospheric transmission spectrum (Lord, 1992)
   ; file is big, best to read it in only once
@@ -20,19 +20,17 @@ PRO check_standards, ccorr_fxn=ccorfxn, contf=contf, showplot=showplot
   ; RV standard: telluric-corrected spectrum
   ; cross-correlation with standard star is done on final data product
 ; METHOD 1: use the standard spectrum as-is
-;   file_tc = spec_dir+stars[0]+"_tc.fits"
-;   std_tc0 = MRDFITS(file_tc, /silent)
-;   std_tc0[*,0,*]=std0[*,0,*]	; want to use original wavelength array
-;   stdrv = rvs[0]
-;   print, "NOTE: RVs from Newton et al. (2014) include a -2.6 km/s systematic RV correction, not included here."
+  file_tc = spec_dir+stars[0]+"_tc.fits"
+  std_tc0 = MRDFITS(file_tc, /silent)
+  std_tc0[*,0,*]=std0[*,0,*]	; want to use original wavelength array
+  stdrv = rvs[0]
 
 ; METHOD 2 (preferred): use the at-rest zero-velocity standard created by makemeastandwich
-; (seems to mitigate the random error that gives rise to the systematic correction)
-  wlcal = 1
-  stdrv = 0.
-  file_tc = spec_dir+'J0727+0513_rest.fits'
-  std_tc0 = MRDFITS(file_tc,0, shdr, /silent)
-  std0 = std_tc0
+;   wlcal = 1
+;   stdrv = 0.
+;   file_tc = spec_dir+'J0727+0513_rest.fits'
+;   std_tc0 = MRDFITS(file_tc,0, shdr, /silent)
+;   std0 = std_tc0
 
   FOR i=0,N_ELEMENTS(stars)-1 DO BEGIN 
     std = std0
@@ -66,9 +64,8 @@ PRO check_standards, ccorr_fxn=ccorfxn, contf=contf, showplot=showplot
 	wrange=wrange, trange=trange, $
 	mshft=mshft, smshft=smshft, rv=myrv, $
 	showplot=showplot, torest=rv0, $
-	ccorr_fxn=ccor_fxn, $
+	ccorr_fxn=ccorr_fxn, contf=contf, $
 	quiet=1
-	
       if order LT 3 then temp[order] = myrv
 
     ENDFOR
@@ -79,6 +76,8 @@ PRO check_standards, ccorr_fxn=ccorfxn, contf=contf, showplot=showplot
     print, "==========="
    
   ENDFOR
+
+  print, "NOTE: RVs from Newton et al. (2014) include a -2.6 km/s systematic RV correction, not included here."
   
   
 END
