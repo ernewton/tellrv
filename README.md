@@ -2,7 +2,7 @@
 
 This code measures absolute radial velocities for low-resolution NIR spectra. I use telluric features to provide absolute wavelength calibration, and then cross-correlate with a standard star. To use the code for your star, you will need observations of a standard star (included) and your science target (examples included). You will need both the telluric and non-telluric-corrected spectra and the FITS headers, but no other spectra is required. Orders do not need to be combined. It should work for all extant spectra taken with SpeX on IRTF or similar instruments. 
 
-A radial velocity standard, already shifted to rest wavelengths, is included in this installation (`/spec/J0727+0513_rest.fits`). It was created with the program `makemeastandwich.pro`.
+A radial velocity standard is included in this installation (`/spec/J0727+0513_rest.fits`). It was created with the program `makemeastandwich.pro`. The wavelength calibration has been performed, but the known RV (18.2 km/s) and the barycentric velocity have not been corrected for. These are taken into account in nir_rv.
 
 ## Routines
 

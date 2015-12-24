@@ -59,7 +59,7 @@ FUNCTION FLATTEN, int, showplot=showplot, contf=contf, frac=frac, sbin=sbin
 	ENDELSE
 	
 	IF ~KEYWORD_SET(frac) THEN BEGIN
-	  frac1 = 0.4
+	  frac1 = 0.5
 	  frac2 = 0.2
 	ENDIF ELSE BEGIN
 	  frac1 = frac
@@ -100,13 +100,13 @@ END
 
 
 
-PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
+PRO ERN_RV, data, std, rv0=rv0, $
 	showplot=showplot, $ ; show plots in output?
 	pixscale=pixscale, $ ; pixel scale
 	wrange=wrange, $ ; wavelenghts to flatten over,
 	oversamp=oversamp, $ ; oversampling multiple
 	zero=zero, nan=nan, $ ; bad data flags
-	ccorr_fxn=ccorr_fxn, $ ; choosing cross-correlation routine
+	ccorr=ccorr, $ ; choosing cross-correlation routine
 	corr_range=corr_range, $ ; cross-corr range
 	contf=contf, frac=frac, sbin=sbin, $ ; for flattening spectrum
 	quiet=quiet, mask=mask
@@ -166,11 +166,11 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 	ENDIF
 
 	IF NOT KEYWORD_SET(corr_range) THEN corr_range=fix(20*.0005/pixscale)
-	IF NOT KEYWORD_SET(ccorr_fxn) THEN ccorr_fxn='c_correlate'
-	IF ccorr_fxn EQ 'xcorl' THEN BEGIN
+	IF NOT KEYWORD_SET(ccorr) THEN ccorr='c_correlate'
+	IF ccorr EQ 'xcorl' THEN BEGIN
 		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using xcorl"
 		xcorl, flat_std, flat_obj, corr_range, shft, chi, minchi, plot=showplot, print=showplot
-	ENDIF ELSE IF ccorr_fxn EQ 'c_correlate' THEN BEGIN
+	ENDIF ELSE IF ccorr EQ 'c_correlate' THEN BEGIN
 		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using c_correlate + modifications"
 		lag = indgen(corr_range*2)-corr_range
 		result = c_correlate(flat_obj, flat_std, lag) ; opposite order
@@ -184,10 +184,10 @@ PRO ERN_RV, data, std, rv0=rv0, chi=chi,  $
 		ENDIF ELSE $
 			offset = 0.
 		shft = lag[p] + offset
-	ENDIF ELSE IF ccorr_fxn EQ 'cross_correlate' THEN BEGIN
+	ENDIF ELSE IF ccorr EQ 'cross_correlate' THEN BEGIN
 		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using cross_correlate"
 		cross_correlate, flat_std, flat_obj, shft, result, width=corr_range*2
-	ENDIF ELSE message, 'Cross-correlation routine not implemented: ', ccorr_fxn
+	ENDIF ELSE message, 'Cross-correlation routine not implemented: ', ccorr
 
 	; these are the pixel arrays
 	pix_fiducial = MAKE_ARRAY(N_ELEMENTS(wl_vector),/index)

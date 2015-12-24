@@ -10,7 +10,7 @@
 ;		[std, /WVCAL, STDRV=, ATRANS=,
 ;		POLYDEGREE=, PIXSCALE=, SPOLYDEGREE=, SPIXSCALE,
 ;		TRANGE=, WRANGE=, 
-;		CORR_RANGE=, MAXSHIFT=, CCORR_FXN=,
+;		CORR_RANGE=, MAXSHIFT=, CCORR=,
 ;		FRAC=, BIN=, /CONTF,
 ;		SMSHFT=, MSHFT=, SHFTARR=,
 ;		RV=, RELRV=, TOREST=,
@@ -29,6 +29,7 @@
 ;
 ; OPTIONAL KEYWORD INPUTS:
 ;	wvcal = flag indicating wavelength calibration has been done for stanadrd [0]
+;	atrest = flag indicating RV standard is already at rest velocity
 ;	rvstd = known RV of standard star [0]
 ;	atrans = atmospheric transmission spectrum or file name [read from $SPEX_DIR/Spextool/data/atrans.fits]
 ;	polydegree = Legendre polynomial degree for model on non-telluric corrected science star data [4]
@@ -39,7 +40,7 @@
 ;	wrange = wavelength range used for cross-correlation [data[0,0],data[-1,0]]
 ;	corr_range = number of oversampled pixels for cross-correlation [about 20]
 ;	maxshift = maximum allowable shift in telluric modeling [0.008 microns]
-;	ccorr_fxn = choice of cross-correlation routine [c_correlate]
+;	ccorr = choice of cross-correlation routine [c_correlate]
 ;	frac, bin = options for continuum removal
 ;	contf = flag indicating the contf routine can be used [0]	
 ;	
@@ -92,12 +93,12 @@
 
 PRO NIR_RV, mydata_tc, hdr, mydata, $
 	mystd_tc, shdr, mystd, $
-	wlcal=wlcal, stdrv=stdrv, $
+	wlcal=wlcal, atrest=atrest, stdrv=stdrv, $
 	atrans=atrans, $
 	polydegree=plorder, pixscale=pixscale, $
 	spolydegree=s_plorder, spixscale=s_pixscale, $
 	trange=trange, wrange=wrange, $
-	corr_range=corr_range, maxshift=maxshift, ccorr_fxn=ccorr_fxn, $
+	corr_range=corr_range, maxshift=maxshift, ccorr=ccorr, $
 	frac=frac, sbin=sbin, contf=contf, $
 	smshft=s_mshft, mshft=mshft, $ ; linear shift in microns
 	shftarr=shft, $
@@ -117,10 +118,10 @@ PRO NIR_RV, mydata_tc, hdr, mydata, $
 
 	IF ~KEYWORD_SET(atrans) THEN BEGIN
 		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: Reading atrans from spex directory."
-		atrans=MRDFITS('$SPEX_DIR/data/atrans.fits',0) 
+		atrans=MRDFITS('$SPEX_DIR/data/atrans.fits',0, silent=quiet) 
 	ENDIF ELSE IF size(atrans,/type) EQ 7 THEN BEGIN; string! 
 		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: Reading atrans from file name supplied."		
-		atrans=MRDFITS(atrans,0)
+		atrans=MRDFITS(atrans,0, silent=quiet)
 	ENDIF ELSE $
 		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: atrans array supplied."
 
@@ -171,9 +172,11 @@ PRO NIR_RV, mydata_tc, hdr, mydata, $
 		  res=s_res, shft=s_mshft, origcont=s_origcont, quiet=quiet
 		; shift telluric corrected standard to absolute wavelength
 		std_tc_new = std_tc
-		std_tc_new[*,0] = std_tc[*,0]+s_mshft		
+		std_tc_new[*,0] = std_tc[*,0]+s_mshft	
+		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: Wavecal done for standard."
 	ENDIF ELSE BEGIN ; user says this has already been done
 		std_tc_new = std_tc
+		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: wlcal keyword set. No calibration done."
 	ENDELSE
 	IF KEYWORD_SET(showplot) THEN BEGIN
 		erase & multiplot, /default
@@ -191,18 +194,19 @@ PRO NIR_RV, mydata_tc, hdr, mydata, $
 	;
 
 	; now cross-correlate data and standard to get relative radial velocity
-	ERN_RV, data_tc_new, std_tc_new, wrange=wrange, pixscale=pixscale, rv0=rv0, showplot=showplot, chi=chi, corr_range=corr_range, ccorr_fxn=ccorr_fxn, contf=contf, frac=frac, sbin=sbin, quiet=quiet
+	ERN_RV, data_tc_new, std_tc_new, wrange=wrange, pixscale=pixscale, rv0=rv0, showplot=showplot, corr_range=corr_range, ccorr=ccorr, contf=contf, frac=frac, sbin=sbin, quiet=quiet
 
-	IF KEYWORD_SET(wlcal) THEN BEGIN
+	IF KEYWORD_SET(atrest) THEN BEGIN
 		bc = GET_HELIO(hdr, quiet=quiet) 
 		rv = rv0 + bc
 		torest = rv0
+		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: atrest keyword set. No RV for standard star."
 	ENDIF ELSE BEGIN
 		rv=DO_RVSHIFTS(rv0, hdr, shdr, bc=bc, rv_std=stdrv, quiet=quiet)
 		torest=rv-bc
+		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: Adjusting for RV of standard star using velocity provided and barycentric velocity."
 	ENDELSE
 	shft = mshft - data_tc[*,0]*rv0/(3.e5) ; this is what you add to get to zero RV! 
-
 END
 
 

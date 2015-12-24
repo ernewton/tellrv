@@ -10,8 +10,9 @@ pro makemeastandwich
   file_tc = "spec/J0727+0513_tc.fits"
   std_tc0 = MRDFITS(file_tc, /silent)
   std_tc0[*,0,*] = std0[*,0,*]
-  
   hdr=shdr
+  
+  out = std_tc0
 
   for i=0,5 do begin
 
@@ -29,18 +30,17 @@ pro makemeastandwich
       pixscale=pixscale, polydegree=polydegree, $
       spixscale=pixscale, spolydegree=polydegree, $ ; standard is same
       wrange=wrange, trange=trange, $
-      ccorr_fxn='xcorl', /contf, $
+      ccorr='xcorl', /contf, $
       rv=rv, $ ; true rv of star, will be 18.2
       relrv=relrv, $ ; rv relative to standard, will be 0.
       torest=torest, $ ; rv as observed from Earth
       mshft=mshft, smshft=smshft, $  ; shift required to get to absolute wavelength calibration
       shftarr=shftarr ; total shift to zero RV
     
-    std_tc0[*,0,order] = std_tc0[*,0,order]+mshft ; CORRECTS FOR WAVELENGTH CALIBRATION
-
+    out[*,0,order] = std_tc0[*,0,order]+mshft ; CORRECTS FOR WAVELENGTH CALIBRATION
   endfor
-  
-  std_tc0[*,0,*] = std_tc0[*,0,*]*(1.-(18.2-GET_HELIO(hdr))/(3.e5)) ; CORRECTS FOR KNOWN RADIAL VELOCITY
-  mwrfits, std_tc0, "spec/J0727+0513_rest.fits", shdr, /create
-
+ 
+  out[*,0,*] = out[*,0,*]*(1.-(18.2-GET_HELIO(hdr))/(3.e5)) ; CORRECTS FOR KNOWN RADIAL VELOCITY
+  mwrfits, out, "spec/J0727+0513_rest.fits", shdr, /create
+stop
 end
