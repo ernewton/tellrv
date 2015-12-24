@@ -8,7 +8,7 @@ PRO check_standards, ccorr=ccorr, contf=contf, showplot=showplot
   ; read in atmospheric transmission spectrum (Lord, 1992)
   ; file is big, best to read it in only once
   ; you can find atrans in the spextool libary at Spextool/data/atrans.fits
-  atrans=MRDFITS('/home/enewton/pro/Spextool/data/atrans.fits',0, silent=quiet)
+  atrans=MRDFITS('$SPEX_DIR/data/atrans.fits',0, silent=quiet)
 
   ; list of standard stars and their RVs
   READCOL, 'standards.txt', stars, sptypes, rvs, skipline=1, format='(A,I,F)', silent=quiet
