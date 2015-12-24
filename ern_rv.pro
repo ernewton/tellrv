@@ -59,7 +59,7 @@ FUNCTION FLATTEN, int, showplot=showplot, contf=contf, frac=frac, sbin=sbin
 	ENDELSE
 	
 	IF ~KEYWORD_SET(frac) THEN BEGIN
-	  frac1 = 0.5
+	  frac1 = 0.4
 	  frac2 = 0.2
 	ENDIF ELSE BEGIN
 	  frac1 = frac

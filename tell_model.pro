@@ -61,6 +61,9 @@ END
 PRO TELLSPEC_INTERP, data, atrans, wl_vector, data_interp, atrans_interp, pixscale, oversamp, trange=trange
 
 	; wavelength range for new data
+	; NOTE! This differs slightly from what was used in Newton et al.
+	;   (2014,2015), for which the region of interest was selected in 
+	;   'tell_func'
 	IF N_ELEMENTS(trange) NE 2 THEN BEGIN
 		start_wl = MIN(data[*,0])
 		end_wl = MAX(data[*,0])
@@ -126,8 +129,9 @@ PRO TELL_MODEL, atrans, data, hdr, $
 	parinfo[1].value=2.d			; 2 is typical for all but the K band.
 	parinfo[0].limited=[1.,1.]		; limit the shift in pixels to...
 	parinfo[0].limits=[-maxshft,maxshft]	; ... 0.0015 microns
-	parinfo[1].limited=[1.,0.]			; lower limit on the scaling
-	parinfo[1].limits=[0.,10.]
+; not sure whether to include
+; 	parinfo[1].limited=[1.,0.]			; lower limit on the scaling
+; 	parinfo[1].limits=[0.,10.]
 
 	; run MPFIT
 	res = MPFIT('tell_func',parinfo=parinfo,functargs=fa, dof=dof, bestnorm=chi2,covar=covar, quiet=1)

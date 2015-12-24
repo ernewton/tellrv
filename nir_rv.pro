@@ -198,15 +198,16 @@ PRO NIR_RV, mydata_tc, hdr, mydata, $
 
 	IF KEYWORD_SET(atrest) THEN BEGIN
 		bc = GET_HELIO(hdr, quiet=quiet) 
-		rv = rv0 + bc
-		torest = rv0
+		rv = rv0 + bc ; actual RV
+		torest = rv0 ; the required correction
 		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: atrest keyword set. No RV for standard star."
 	ENDIF ELSE BEGIN
 		rv=DO_RVSHIFTS(rv0, hdr, shdr, bc=bc, rv_std=stdrv, quiet=quiet)
 		torest=rv-bc
 		IF ~KEYWORD_SET(quiet) THEN print, "NIR_RV: Adjusting for RV of standard star using velocity provided and barycentric velocity."
 	ENDELSE
-	shft = mshft - data_tc[*,0]*rv0/(3.e5) ; this is what you add to get to zero RV! 
+	shft = mshft - (mshft+data_tc[*,0])*torest/(3.e5) ; this is what you add to get to rest wavelengths! Fixed to treat linear shift correctly.
+	
 END
 
 
