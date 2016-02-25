@@ -144,10 +144,10 @@ PRO NIR_RV, mydata_tc, hdr, mydata, $
 	  plorder=plorder, trange=trange, oversamp=oversamp, $
 	  pixscale=pixscale, maxshft=maxshft, showplot=showplot, $
 	  res=res, shft=mshft, origcont=origcont, quiet=quiet
+	
 	; shift telluric corrected data to absolute wavelength
 	data_tc_new = data_tc
 	data_tc_new[*,0] = data_tc[*,0]+mshft
-	
 	IF KEYWORD_SET(showplot) THEN BEGIN
 		erase & multiplot, /default
 		plot, data[*,0], data[*,1]/origcont, xrange=trange, /xsty, yrange=[0,1.5], title='Resulting absolute wavelength calibration (data)'

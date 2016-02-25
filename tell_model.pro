@@ -26,6 +26,7 @@ FUNCTION TELL_FUNC, p, lambda=lambda, atrans=atrans, data=data, model=model, con
 
 	shft = p[0]*pixscale/oversamp
 	wl_shift = lambda + shft
+	
 	atrans_new=INTERPOL(atrans_new, lambda, wl_shift)
 
 	; p is polynomial coefficients
@@ -130,8 +131,8 @@ PRO TELL_MODEL, atrans, data, hdr, $
 	parinfo[0].limited=[1.,1.]		; limit the shift in pixels to...
 	parinfo[0].limits=[-maxshft,maxshft]	; ... 0.0015 microns
 ; not sure whether to include
-; 	parinfo[1].limited=[1.,0.]			; lower limit on the scaling
-; 	parinfo[1].limits=[0.,10.]
+	parinfo[1].limited=[1.,0.]			; lower limit on the scaling
+	parinfo[1].limits=[0.5,10.]
 
 	; run MPFIT
 	res = MPFIT('tell_func',parinfo=parinfo,functargs=fa, dof=dof, bestnorm=chi2,covar=covar, quiet=1)

@@ -136,7 +136,8 @@ PRO ERN_RV, data, std, rv0=rv0, $
 
 	; interpolate object and standard onto new grid
 	int_obj = INTERPOL(data[roi,1],ALOG(data[roi,0]),wl_vector, /spline) 
-	int_std = INTERPOL(std[*,1],ALOG(std[*,0]),wl_vector, /spline)	
+	sroi = WHERE(std[*,0] GE wrange[0] AND std[*,0] LE wrange[1])
+	int_std = INTERPOL(std[sroi,1],ALOG(std[sroi,0]),wl_vector, /spline)	
 
 	; remove continuum
 	IF ~KEYWORD_SET(quiet) THEN BEGIN
@@ -148,22 +149,18 @@ PRO ERN_RV, data, std, rv0=rv0, $
 	flat_obj=FLATTEN(int_obj, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
 	flat_std=FLATTEN(int_std, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
 
-	IF KEYWORD_SET(showplot) THEN BEGIN
-	
-		print, wl_vector[1]-wl_vector[0]
-		print, wl_vector[0], wl_vector[1]
-		print, start_wl, end_wl
-		
-		; this plot checks the interpolations
-		plot, wl_vector, int_obj
-		oplot, wl_vector, int_std-0.4
-		oplot, ALOG(data[*,0]), data[*,1], co=3
-		oplot, ALOG(data[*,0]), data[*,1]-0.4, co=4
-		oplot, [ALOG(2.2063),ALOG(2.2063)],[0,5],linestyle=2
-		oplot, [ALOG(2.26267),ALOG(2.26267)],[0,5],linestyle=2
-		wait, 2
-	
-	ENDIF
+; 	IF KEYWORD_SET(showplot) THEN BEGIN
+; 			
+; 		; this plot checks the interpolations
+; 		plot, wl_vector, int_obj
+; 		oplot, wl_vector, int_std-0.4
+; 		oplot, ALOG(data[*,0]), data[*,1], co=3
+; 		oplot, ALOG(data[*,0]), data[*,1]-0.4, co=4
+; 		oplot, [ALOG(2.2063),ALOG(2.2063)],[0,5],linestyle=2
+; 		oplot, [ALOG(2.26267),ALOG(2.26267)],[0,5],linestyle=2
+; 		wait, 2
+; 	
+; 	ENDIF
 
 	IF NOT KEYWORD_SET(corr_range) THEN corr_range=fix(20*.0005/pixscale)
 	IF NOT KEYWORD_SET(ccorr) THEN ccorr='c_correlate'
