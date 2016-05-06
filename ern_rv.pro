@@ -49,7 +49,7 @@ END
 
 
 FUNCTION FLATTEN, int, showplot=showplot, contf=contf, frac=frac, sbin=sbin
-
+	
 	IF ~KEYWORD_SET(sbin) THEN BEGIN
 	  sbin1 = 10
 	  sbin2 = 6
@@ -66,7 +66,7 @@ FUNCTION FLATTEN, int, showplot=showplot, contf=contf, frac=frac, sbin=sbin
 	  frac2 = frac
 	ENDELSE
 	
-	IF KEYWORD_SET(showplot) THEN showplot=2
+; 	IF KEYWORD_SET(showplot) THEN showplot=2
 
 	IF KEYWORD_SET(contf) THEN BEGIN
 	
@@ -107,14 +107,21 @@ PRO ERN_RV, data, std, rv0=rv0, $
 	oversamp=oversamp, $ ; oversampling multiple
 	zero=zero, nan=nan, $ ; bad data flags
 	ccorr=ccorr, $ ; choosing cross-correlation routine
-	corr_range=corr_range, $ ; cross-corr range
+	corr_range=corr_range, $ ; cross-corr range (assumes microns)
 	contf=contf, frac=frac, sbin=sbin, $ ; for flattening spectrum
-	quiet=quiet, mask=mask
+	quiet=quiet, mask=mymask, $
+	flatten=flatten  ; flatten spec?
 
 	IF KEYWORD_SET(showplot) THEN showplot=1
 	IF ~KEYWORD_SET(pixscale) THEN pixscale = abs(median(data[0:-2,0]-data[1:-1,0]))
 	IF ~KEYWORD_SET(wrange) THEN wrange = [data[0,0],data[-1,0]]
 	IF ~KEYWORD_SET(oversamp) THEN oversamp=6. 
+	IF N_ELEMENTS(flatten) EQ 0 THEN flatten=1
+	IF N_ELEMENTS(mymask) EQ 0 THEN $
+	  mask = FLTARR(N_ELEMENTS(data))+1 $
+	ELSE IF N_ELEMENTS(mask) EQ N_ELEMENTS(data[*,0]) THEN $
+	  mask = mymask $
+	ELSE message, "ERN_RV: Mask doesn't match data"
 
 	; select wavelength range (log lambda)
 	start_wl = ALOG(wrange[0])
@@ -135,9 +142,9 @@ PRO ERN_RV, data, std, rv0=rv0, $
 	ENDELSE
 
 	; interpolate object and standard onto new grid
-	int_obj = INTERPOL(data[roi,1],ALOG(data[roi,0]),wl_vector, /spline) 
+	int_obj = INTERPOL(data[*,1],ALOG(data[*,0]),wl_vector, /spline) 
 	sroi = WHERE(std[*,0] GE wrange[0] AND std[*,0] LE wrange[1])
-	int_std = INTERPOL(std[sroi,1],ALOG(std[sroi,0]),wl_vector, /spline)	
+	int_std = INTERPOL(std[*,1],ALOG(std[*,0]),wl_vector, /spline)	
 
 	; remove continuum
 	IF ~KEYWORD_SET(quiet) THEN BEGIN
@@ -146,9 +153,14 @@ PRO ERN_RV, data, std, rv0=rv0, $
 	  IF KEYWORD_SET(frac) THEN print, "ERN_RV: using user-supplied value for frac in FLATTEN. Are you sure?"
 	  IF KEYWORD_SET(sbin) THEN print, "ERN_RV: using user-supplied value for sbin in FLATTEN. Are you sure?"
 	ENDIF
-	flat_obj=FLATTEN(int_obj, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
-	flat_std=FLATTEN(int_std, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
-
+	
+	IF KEYWORD_SET(flatten) THEN BEGIN
+	  flat_obj=FLATTEN(int_obj, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
+	  flat_std=FLATTEN(int_std, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
+	ENDIF ELSE BEGIN
+	  flat_obj = int_obj/median(int_obj)
+	  flat_std = int_std/median(int_std)
+	ENDELSE
 ; 	IF KEYWORD_SET(showplot) THEN BEGIN
 ; 			
 ; 		; this plot checks the interpolations
@@ -198,7 +210,7 @@ PRO ERN_RV, data, std, rv0=rv0, $
 	RV0=3.0e5*offset					; velocity
 
 	IF KEYWORD_SET(showplot) THEN BEGIN
-	
+	wait, 2
 		erase & multiplot, [1,3]
 		
 		plot, pix_fiducial, int_obj/MEAN(int_obj), /xsty, title='Shifting observed to match standard'

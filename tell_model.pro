@@ -77,8 +77,11 @@ PRO TELLSPEC_INTERP, data, atrans, wl_vector, data_interp, atrans_interp, pixsca
 	wl_vector = SCALE_VECTOR(FIX(FINDGEN((end_wl-start_wl)*oversamp/pixscale)), start_wl, end_wl)
 	
 	; interpolate atrans and object flux onto wl_vector
-	atrans_interp = INTERPOL(atrans[*,1],atrans[*,0],wl_vector, /spline) 
-	data_interp = INTERPOL(data[*,1],data[*,0],wl_vector, /spline)
+	roi = WHERE(atrans[*,0] GE start_wl-0.1 AND atrans[*,0] LT end_wl+0.1 AND FINITE(atrans[*,1]))
+	atrans_interp = INTERPOL(atrans[roi,1],atrans[roi,0],wl_vector, /spline) 
+
+	roi = WHERE(data[*,0] GE start_wl-0.1 AND data[*,0] LT end_wl+0.1 AND FINITE(data[*,1]) AND data[*,1] GT 0)
+	data_interp = INTERPOL(data[roi,1],data[roi,0],wl_vector, /spline)
 
 ; plot, data[*,0], data[*,1]
 ; oplot, wl_vector, data_interp, co=2
@@ -102,7 +105,7 @@ END
 ; Modify the atmospheric transmission spectrum until it matches the observation to find the necessary wavelength shift
 
 
-PRO TELL_MODEL, atrans, data, hdr, $
+PRO TELL_MODEL, atrans, data, $
 	data_new, atrans_new=atrans_new, $
 	plorder=plorder, trange=trange, maxshft=maxshft, $
 	oversamp=oversamp, pixscale=pixscale, $
@@ -111,6 +114,10 @@ PRO TELL_MODEL, atrans, data, hdr, $
 	
 	IF ~KEYWORD_SET(quiet) THEN quiet=0
 	IF ~KEYWORD_SET(trange) THEN trange=[data[0,0],data[-1,0]]
+	IF ~KEYWORD_SET(pixscale) THEN pixscale = MEAN(data[1:-1,0]-data[0:-2,0])
+	IF ~KEYWORD_SET(oversamp) THEN oversamp = 1.
+	IF ~KEYWORD_SET(plorder) THEN plorder = 5
+	IF ~KEYWORD_SET(maxshft) THEN maxshft = pixscale*5.
 
 	; interpolate data and atrans onto new wavelength grid
 	; data_interp, atrans_interp are interpolated fluxes

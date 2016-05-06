@@ -140,7 +140,7 @@ PRO NIR_RV, mydata_tc, hdr, mydata, $
 	
 	; data: get wavelength calibration by modeling the telluric features
 	maxshft=maxshift/pixscale*oversamp
-	TELL_MODEL, atrans, data, hdr, data_new, atrans_new=atrans_new, $
+	TELL_MODEL, atrans, data, data_new, atrans_new=atrans_new, $
 	  plorder=plorder, trange=trange, oversamp=oversamp, $
 	  pixscale=pixscale, maxshft=maxshft, showplot=showplot, $
 	  res=res, shft=mshft, origcont=origcont, quiet=quiet
@@ -166,7 +166,7 @@ PRO NIR_RV, mydata_tc, hdr, mydata, $
 	; standard: get wavelength calibration by modeling the telluric features
 	IF ~KEYWORD_SET(wlcal) THEN BEGIN 
 		maxshft=maxshift/s_pixscale*oversamp
-		TELL_MODEL,atrans, std, shdr, std_new, atrans_new=atrans_new, $
+		TELL_MODEL,atrans, std, std_new, atrans_new=atrans_new, $
 		  plorder=plorder, trange=trange, oversamp=oversamp, $
 		  pixscale=s_pixscale, maxshft=maxshft, showplot=showplot, $
 		  res=s_res, shft=s_mshft, origcont=s_origcont, quiet=quiet
