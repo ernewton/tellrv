@@ -70,23 +70,30 @@ FUNCTION FLATTEN, int, showplot=showplot, contf=contf, frac=frac, sbin=sbin
 
 	IF KEYWORD_SET(contf) THEN BEGIN
 	
-		CONTF, int, c1, nord=4, sbin=sbin1,frac=frac1, plot=showplot, mask=fin, xspline=xspline, yspline=yspline
+		CONTF, int, c1, nord=4, sbin=sbin1,frac=frac1, plot=0, mask=fin, xspline=xspline, yspline=yspline
 		t1=SPLINE(xspline,yspline,FINDGEN(N_ELEMENTS(int)))
 		
-		CONTF, int/t1, c2, nord=4, sbin=sbin2,frac=frac2, plot=showplot, mask=fin, xspline=xspline, yspline=yspline
+		CONTF, int/t1, c2, nord=4, sbin=sbin2,frac=frac2, plot=0, mask=fin, xspline=xspline, yspline=yspline
 		t2=SPLINE(xspline,yspline,FINDGEN(N_ELEMENTS(int)))
 		
 		flat=int/t1/t2
 		
 	ENDIF ELSE BEGIN
 	
-		t1 = SPLINE_CONT(int, sbin=sbin1, frac=frac1, showplot=showplot)
-		t2 = SPLINE_CONT(int/t1, sbin=sbin2, frac=frac2, showplot=showplot)
+		t1 = SPLINE_CONT(int, sbin=sbin1, frac=frac1, showplot=0)
+		t2 = SPLINE_CONT(int/t1, sbin=sbin2, frac=frac2, showplot=0)
 		flat=int/t1/t2
 	
 	ENDELSE
-	IF KEYWORD_SET(showplot) THEN wait,2
 
+	; sometimes goes bad...
+	flat[WHERE(flat LT 0)] = 0
+	flat[WHERE(flat GT 2)] = 0
+	IF KEYWORD_SET(showplot) THEN BEGIN
+		plot, flat
+		wait, 2
+	ENDIF
+	
 	RETURN, flat
 
 END
@@ -100,7 +107,7 @@ END
 
 
 
-PRO ERN_RV, data, std, rv0=rv0, $
+PRO ERN_RV, data, std, rv0=rv0, chi0=chi0, $
 	showplot=showplot, $ ; show plots in output?
 	pixscale=pixscale, $ ; pixel scale
 	wrange=wrange, $ ; wavelenghts to flatten over,
@@ -109,8 +116,9 @@ PRO ERN_RV, data, std, rv0=rv0, $
 	ccorr=ccorr, $ ; choosing cross-correlation routine
 	corr_range=corr_range, $ ; cross-corr range (assumes microns)
 	contf=contf, frac=frac, sbin=sbin, $ ; for flattening spectrum
-	quiet=quiet, mask=mymask, $
-	flatten=flatten  ; flatten spec?
+	quiet=quiet, $ ;mask=mymask, $
+	flatten=flatten, $  ; flatten spec?
+	svd=svd ; flatten using SVD?
 
 	IF KEYWORD_SET(showplot) THEN showplot=1
 	IF ~KEYWORD_SET(pixscale) THEN pixscale = abs(median(data[0:-2,0]-data[1:-1,0]))
@@ -155,8 +163,18 @@ PRO ERN_RV, data, std, rv0=rv0, $
 	ENDIF
 	
 	IF KEYWORD_SET(flatten) THEN BEGIN
-	  flat_obj=FLATTEN(int_obj, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
-	  flat_std=FLATTEN(int_std, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
+	  IF KEYWORD_SET(svd) THEN BEGIN
+	    res = SVDFIT(wl_vector, int_obj, 3, /legendre, YFIT=fit)
+	    flat_obj = int_obj/fit
+	    plot, wl_vector, flat_obj 
+ 	    res = SVDFIT(wl_vector, int_std, 3, /legendre, YFIT=fit)
+ 	    flat_std = int_std/fit
+	    oplot, wl_vector, flat_std, color=2
+	    wait, 1
+	  ENDIF ELSE BEGIN
+	    flat_obj=FLATTEN(int_obj, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
+	    flat_std=FLATTEN(int_std, showplot=showplot, contf=contf, frac=frac, sbin=sbin)
+	  ENDELSE
 	ENDIF ELSE BEGIN
 	  flat_obj = int_obj/median(int_obj)
 	  flat_std = int_std/median(int_std)
@@ -179,11 +197,16 @@ PRO ERN_RV, data, std, rv0=rv0, $
 	IF ccorr EQ 'xcorl' THEN BEGIN
 		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using xcorl"
 		xcorl, flat_std, flat_obj, corr_range, shft, chi, minchi, plot=showplot, print=showplot
+		chi0 = 1.-minchi/(total(flat_obj*flat_obj))
 	ENDIF ELSE IF ccorr EQ 'c_correlate' THEN BEGIN
 		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using c_correlate + modifications"
 		lag = indgen(corr_range*2)-corr_range
 		result = c_correlate(flat_obj, flat_std, lag) ; opposite order
 		pk = MAX(result,p)
+		IF KEYWORD_SET(showplot) THEN BEGIN
+			plot, lag, result, /ynozero, xrange=[-20,20]
+			wait, 1
+		ENDIF
 		; if not at ends, quadratic offset to get better peak
 		IF (p GT 0) AND (p LT (N_ELEMENTS(lag)-1)) THEN BEGIN
 			aa = result[p]
@@ -193,9 +216,11 @@ PRO ERN_RV, data, std, rv0=rv0, $
 		ENDIF ELSE $
 			offset = 0.
 		shft = lag[p] + offset
+		chi0 = 1*pk
 	ENDIF ELSE IF ccorr EQ 'cross_correlate' THEN BEGIN
 		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using cross_correlate"
 		cross_correlate, flat_std, flat_obj, shft, result, width=corr_range*2
+		chi0 = 1*result
 	ENDIF ELSE message, 'Cross-correlation routine not implemented: ', ccorr
 
 	; these are the pixel arrays
