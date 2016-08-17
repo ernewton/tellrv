@@ -34,6 +34,10 @@ FUNCTION GET_HELIO, hdr, degrees=degrees, barycentric=barycentric, force=force, 
 		degrees = 1
 				
 		END
+	   'TILLINGHAST': BEGIN
+		;
+		IF ~KEYWORD_SET(force) THEN RETURN, FXPAR(hdr, 'BCV')
+		message, 'GET_HELIO: Not implemented.'
 	   ELSE: message, 'Telescope invalid'
 	ENDCASE
 
