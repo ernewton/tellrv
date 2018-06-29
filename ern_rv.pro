@@ -200,9 +200,11 @@ PRO ERN_RV, data, std, rv0=rv0, chi0=chi0, $
 		chi0 = 1.-minchi/(total(flat_obj*flat_obj))
 	ENDIF ELSE IF ccorr EQ 'c_correlate' THEN BEGIN
 		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using c_correlate + modifications"
-		lag = indgen(corr_range*2)-corr_range
+		lag = findgen(corr_range*2)-float(corr_range)
+		lag[where(lag EQ 0)] = 0.01 ; hack because it spikes at 0 for no reason
 		result = c_correlate(flat_obj, flat_std, lag) ; opposite order
 		pk = MAX(result,p)
+
 		IF KEYWORD_SET(showplot) THEN BEGIN
 			plot, lag, result, /ynozero, xrange=[-20,20]
 			wait, 1
@@ -217,6 +219,7 @@ PRO ERN_RV, data, std, rv0=rv0, chi0=chi0, $
 			offset = 0.
 		shft = lag[p] + offset
 		chi0 = 1*pk
+		
 	ENDIF ELSE IF ccorr EQ 'cross_correlate' THEN BEGIN
 		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using cross_correlate"
 		cross_correlate, flat_std, flat_obj, shft, result, width=corr_range*2

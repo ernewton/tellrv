@@ -7,7 +7,7 @@ A radial velocity standard is included in this installation (`/spec/J0727+0513_r
 ## Routines
 
 ### check_standards
-Calculates radial velocities of RV standards. Use to test functionality and as an example of usage.
+Calculates radial velocities of RV standards. Use to test functionality and as an example of usage. Please check this with the cross-correlation routine you are using! The measured RVs should be within 6 km/s of the recorded value.
 
 ### nir_rv
 Calculate the radial velocity from a NIR spectrum. Performs both the wavelength calibration and the cross-correlation with a standard star, and takes into account the barycentric velocities and the RV of the standard star.
@@ -26,7 +26,9 @@ This code requires an atmospheric transmission spectra. I use Lord (1992) ATRANS
 ## Alternative sub-routines
 
 ### Cross-correlation
-There are three options for cross-correlation routines: `xcorl`, `c_correlate`, and `cross_correlate`. These are used in `ern_rv`, and can be selected by keyword in the top-level routine `nir_rv`. c_correlate is the default since I believe it is the most commonly available, and ought to be included exist in any modern IDL distribution. `xcorl` is not my code, but may be available to you. I prefer the routine `cross_correlate` which may be available in your installation. `xcor`l and `cross_correlate` produce consistent results; I have improved the peak finding after retrieving results from `c_correlate` but values may still differ by up to 1 km/s.
+There are three options for cross-correlation routines: `xcorl`, `c_correlate`, and `cross_correlate`. These are used in `ern_rv`, and can be selected by keyword in the top-level routine `nir_rv`. c_correlate is the default since I believe it is the most commonly available, and ought to be included exist in any modern IDL distribution. `xcorl` is not my code, but may be available to you. I prefer the routine `cross_correlate` which may be available in your installation. `xcorl` and `cross_correlate` produce consistent results; I have improved the peak finding after retrieving results from `c_correlate` but values may still differ by up to 1 km/s.
+
+Note June 29 2018: `c_correlate` is producing discrepant behavior due to spikes in the cross-correlation function occurring at 0. This has been rectified by testing lag=0.01 instead of lag=0. but I still do not understand the origin of this error.
 
 ### Continuum fitting
 There are two options for continuum fitting: a spline-based routine and the routine `contf`. `contf` is not my code, but may be available to you. The default spline-based routine is based on `contf` and is included in this code. The choice is not important in most cases.
