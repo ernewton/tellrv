@@ -31,13 +31,13 @@ FUNCTION GET_HELIO, hdr, degrees=degrees, barycentric=barycentric, force=force, 
 		alt = FXPAR(hdr, 'SITEALT')
 		date = FXPAR(hdr, 'DATE-OBS')
 		time = FXPAR(hdr, 'UT-TIME')
-		degrees = 1
-				
+		degrees = 1				
 		END
 	   'TILLINGHAST': BEGIN
 		;
 		IF ~KEYWORD_SET(force) THEN RETURN, FXPAR(hdr, 'BCV')
 		message, 'GET_HELIO: Not implemented.'
+		END
 	   ELSE: message, 'Telescope invalid'
 	ENDCASE
 
