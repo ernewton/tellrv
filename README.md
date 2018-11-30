@@ -28,7 +28,9 @@ This code requires an atmospheric transmission spectra. I use Lord (1992) ATRANS
 ### Cross-correlation
 There are three options for cross-correlation routines: `xcorl`, `c_correlate`, and `cross_correlate`. These are used in `ern_rv`, and can be selected by keyword in the top-level routine `nir_rv`. c_correlate is the default since I believe it is the most commonly available, and ought to be included exist in any modern IDL distribution. `xcorl` is not my code, but may be available to you. I prefer the routine `cross_correlate` which may be available in your installation. `xcorl` and `cross_correlate` produce consistent results; I have improved the peak finding after retrieving results from `c_correlate` but values may still differ by up to 1 km/s.
 
-Note June 29 2018: `c_correlate` is producing discrepant behavior due to spikes in the cross-correlation function occurring at 0. This has been rectified by testing lag=0.01 instead of lag=0. but I still do not understand the origin of this error.
+Note Jun 29 2018: `c_correlate` is producing discrepant behavior due to spikes in the cross-correlation function occurring at 0. This has been rectified by testing lag=0.01 instead of lag=0. but I still do not understand the origin of this error.
+
+Note Nov 30 2018: Aaron Rizzuto identified this as being caused by the last item in the flux array being identically zero after flattening. Forcing them to be the median of the flattened array fixes this problem. The lag=0.01 hack removed and c_correlate works as expected.
 
 ### Continuum fitting
 There are two options for continuum fitting: a spline-based routine and the routine `contf`. `contf` is not my code, but may be available to you. The default spline-based routine is based on `contf` and is included in this code. The choice is not important in most cases.
