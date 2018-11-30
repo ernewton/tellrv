@@ -87,8 +87,13 @@ FUNCTION FLATTEN, int, showplot=showplot, contf=contf, frac=frac, sbin=sbin
 	ENDELSE
 
 	; sometimes goes bad...
-	flat[WHERE(flat LT 0)] = 0
-	flat[WHERE(flat GT 2)] = 0
+	flat[WHERE(flat LT 0)] = median(flat)
+	flat[WHERE(flat GT 2)] = median(flat)
+	
+	; Aaron Rizzuto's fix for gettng rid of the spike at lag=0
+	; the last elements is zero!
+	flat[-1] = median(flat)
+
 	IF KEYWORD_SET(showplot) THEN BEGIN
 		plot, flat
 		wait, 2
@@ -201,7 +206,7 @@ PRO ERN_RV, data, std, rv0=rv0, chi0=chi0, $
 	ENDIF ELSE IF ccorr EQ 'c_correlate' THEN BEGIN
 		IF ~KEYWORD_SET(quiet) THEN print, "ERN_RV: Using c_correlate + modifications"
 		lag = findgen(corr_range*2)-float(corr_range)
-		lag[where(lag EQ 0)] = 0.01 ; hack because it spikes at 0 for no reason
+;		lag[where(lag EQ 0)] = 0.01
 		result = c_correlate(flat_obj, flat_std, lag) ; opposite order
 		pk = MAX(result,p)
 
